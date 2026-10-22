@@ -1,5 +1,5 @@
-# statkit.cms.api
-statkit.cms.api
+# gospelfix.cms.api
+gospelfix.cms.api
 
 ## service.supabase.v2
 
@@ -26,7 +26,7 @@ Next.js 14 + Supabase 기반 관리자 앱.
 ## 프로젝트 구조
 
 ```
-statkit.cms.api/
+gospelfix.cms.api/
 ├── docs/                      # PRD, ROADMAP
 ├── middleware.ts              # 라우트 보호 (Supabase 세션 갱신)
 ├── next.config.mjs
