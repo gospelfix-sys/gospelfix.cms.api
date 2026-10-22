@@ -122,7 +122,7 @@ dist
 # TernJS port file
 .tern-port
 
-# Stores Visual Studio Code versions used for testing Visual Studio Code extensions
+# Stores VSCode versions used for testing VSCode extensions
 .vscode-test
 
 # pnpm
@@ -142,8 +142,32 @@ vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 .vite/
 
-# Astro generated types
-.astro/
+#ETC
+.DS_Store
 
-# Turbo Repo
-.turbo
+# Supabase CLI temporary files
+supabase/.temp/
+supabase/.branches/
+
+# 실제 데이터 백업 파일 — 개인정보 포함, git 제외
+supabase/backups/
+
+# MCP shrimp-task-manager 로컬 작업 데이터
+.shrimp_data/
+
+# 사업 전략·정책 문서 (PRD, ROADMAP 등) — 레포 비공개 (루트 docs/만; .claude/agents/docs/는 추적)
+/docs/
+
+# Claude Code 로컬 전용 — 쿠폰/추천인 정책, 외부 서비스 연동 현황 등 사업 맥락 포함
+.claude/memory/
+.claude/plans/
+.claude/agent-memory/
+.claude/worktrees/
+.claude/settings.local.json
+.claude/scheduled_tasks.lock
+
+# Serena MCP 로컬 캐시·메모리
+.serena/
+
+# SFTP 접속 정보 (비밀번호가 들어갈 수 있음)
+.vscode/sftp.json
