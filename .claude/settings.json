@@ -1,0 +1,85 @@
+{
+  "model": "sonnet",
+  "plansDirectory": ".claude/plans/",
+  "env": {
+    "MAX_THINKING_TOKENS": "10000",
+    "CLAUDE_AUTOCOMPACT_PCT_OVERRIDE": "50",
+    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
+  },
+  "outputStyle": "Explanatory",
+  "hooks": {
+    "Notification": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/notification-hook.sh"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '✅ 작업 완료. 변경된 파일:' && (git status --short 2>/dev/null || echo '(git 없음)')"
+          }
+        ]
+      },
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/notify.sh"
+          }
+        ]
+      },
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/stop-hook.sh"
+          }
+        ]
+      }
+    ]
+  },
+  "permissions": {
+    "allow": [
+      "Bash",
+      "mcp__ide__getDiagnostics",
+      "mcp__sequential-thinking",
+      "mcp__supabase__list_projects",
+      "mcp__supabase__get_project",
+      "mcp__supabase__get_project_url",
+      "mcp__supabase__list_tables",
+      "mcp__supabase__get_advisors",
+      "mcp__supabase__list_migrations",
+      "mcp__supabase__list_extensions",
+      "mcp__supabase__query_logs",
+      "mcp__supabase__search_docs",
+      "mcp__supabase__generate_typescript_types",
+      "mcp__supabase__list_storage_buckets",
+      "mcp__supabase__get_storage_config"
+    ],
+    "deny": [
+      "Read(./.env)",
+      "Read(./.env.*)",
+      "Read(./secrets/**)",
+      "Read(./build/**)",
+      "Write(./.env)",
+      "Write(./.env.*)"
+    ],
+    "ask": ["mcp__supabase__execute_sql", "mcp__supabase__apply_migration"],
+    "defaultMode": "plan",
+    "additionalDirectories": ["/"],
+    "teammateMode": "tmux"
+  },
+  "enableAllProjectMcpServers": true,
+  "enabledMcpjsonServers": ["supabase"]
+}
