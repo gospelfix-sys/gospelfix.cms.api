@@ -3,7 +3,9 @@
     "playwright": {
       "type": "stdio",
       "command": "npx",
-      "args": ["@playwright/mcp@latest"],
+      "args": [
+        "@playwright/mcp@latest"
+      ],
       "env": {}
     },
     "context7": {
@@ -12,7 +14,10 @@
     },
     "sequential-thinking": {
       "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-sequential-thinking"]
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-sequential-thinking"
+      ]
     },
     "serena": {
       "type": "stdio",
@@ -30,7 +35,10 @@
     },
     "shrimp-task-manager": {
       "command": "npx",
-      "args": ["-y", "mcp-shrimp-task-manager"],
+      "args": [
+        "-y",
+        "mcp-shrimp-task-manager"
+      ],
       "env": {
         "DATA_DIR": ".shrimp_data",
         "TEMPLATES_USE": "en",
@@ -39,11 +47,14 @@
     },
     "shadcn": {
       "command": "npx",
-      "args": ["shadcn@latest", "mcp"]
+      "args": [
+        "shadcn@latest",
+        "mcp"
+      ]
     },
     "supabase": {
       "type": "http",
-      "url": "https://mcp.supabase.com/mcp?project_ref=ixnxoscebcuixlndcodc&features=docs%2Caccount%2Cdatabase%2Cdebugging%2Cdevelopment%2Cstorage"
+      "url": "https://mcp.supabase.com/mcp?project_ref=ipyiovfhpmablnbuucsv&features=docs%2Caccount%2Cdatabase%2Cdebugging%2Cdevelopment%2Cstorage"
     }
   }
 }
