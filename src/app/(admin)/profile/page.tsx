@@ -12,6 +12,10 @@ const schema = z.object({
   full_name: z.string().min(1, '이름을 입력해주세요').max(50, '이름은 50자 이하여야 합니다'),
 });
 
+// Google OAuth 아바타는 `=s96-c`(96px)로 저장되어 큰 미리보기에서 흐려지므로 표시용으로만 키운다.
+const upscaleGoogleAvatar = (url: string) =>
+  url.replace(/^(https:\/\/lh3\.googleusercontent\.com\/.+)=s\d+-c$/, '$1=s512-c');
+
 export default function ProfilePage() {
   const { profile } = useAuth();
   const { setProfile: setUserProfile } = useUser();
@@ -114,7 +118,7 @@ export default function ProfilePage() {
             >
               {avatarPreview ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={avatarPreview} alt="프로필 이미지" className="w-full h-full object-cover" />
+                <img src={upscaleGoogleAvatar(avatarPreview)} alt="프로필 이미지" className="w-full h-full object-cover" />
               ) : (
                 <span className="text-5xl font-bold text-gray-300 dark:text-gray-600 select-none">
                   {profile?.full_name?.[0]?.toUpperCase() ?? 'A'}
