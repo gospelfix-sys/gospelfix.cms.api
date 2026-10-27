@@ -7,10 +7,6 @@ export const SignupRequestSchema = z
     email: z.string().email().openapi({ example: 'user@example.com' }),
     password: z.string().min(6).openapi({ example: 'password123' }),
     fullName: z.string().optional().openapi({ example: '홍길동' }),
-    phone: z.string().openapi({ example: '01012345678' }),
-    phoneVerificationToken: z
-      .string()
-      .openapi({ example: '550e8400-e29b-41d4-a716-446655440000' }),
     referralCode: z.string().optional().openapi({
       example: 'AB23CD45',
       description:
@@ -234,8 +230,7 @@ export function registerAuthPaths(reg: OpenAPIRegistry) {
     path: '/api/v1/auth/signup',
     summary: '회원가입',
     description:
-      '이메일/비밀번호/휴대폰 번호로 회원가입합니다. phoneVerificationToken은 ' +
-      '/api/v1/auth/phone/verify-code로 사전에 발급받아야 합니다. ' +
+      '이메일/비밀번호로 회원가입합니다. ' +
       '이메일 확인이 켜져 있으면 confirmation_required 상태를, 꺼져 있으면 즉시 세션을 반환합니다.',
     security: [{ ApiKeyAuth: [] }],
     request: {
@@ -250,7 +245,7 @@ export function registerAuthPaths(reg: OpenAPIRegistry) {
       },
       400: {
         description:
-          '잘못된 요청, 휴대폰 인증 미완료/만료, 또는 Supabase 에러(이미 가입된 이메일 등)',
+          '잘못된 요청 또는 Supabase 에러(이미 가입된 이메일 등)',
         content: { 'application/json': { schema: ErrorResponseSchema } },
       },
       401: {
