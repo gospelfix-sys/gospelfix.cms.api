@@ -7,6 +7,10 @@ export const SignupRequestSchema = z
     email: z.string().email().openapi({ example: 'user@example.com' }),
     password: z.string().min(6).openapi({ example: 'password123' }),
     fullName: z.string().optional().openapi({ example: '홍길동' }),
+    emailVerificationToken: z.string().openapi({
+      example: '550e8400-e29b-41d4-a716-446655440000',
+      description: '/api/v1/auth/email/verify-code로 발급받은 1회용 토큰.',
+    }),
     referralCode: z.string().optional().openapi({
       example: 'AB23CD45',
       description:
@@ -43,6 +47,28 @@ export const VerifyPhoneCodeResponseSchema = z
       .openapi({ example: '550e8400-e29b-41d4-a716-446655440000' }),
   })
   .openapi('VerifyPhoneCodeResponse');
+
+export const SendEmailCodeRequestSchema = z
+  .object({
+    email: z.string().email().openapi({ example: 'user@example.com' }),
+  })
+  .openapi('SendEmailCodeRequest');
+
+export const VerifyEmailCodeRequestSchema = z
+  .object({
+    email: z.string().email().openapi({ example: 'user@example.com' }),
+    code: z.string().openapi({ example: '123456' }),
+  })
+  .openapi('VerifyEmailCodeRequest');
+
+export const VerifyEmailCodeResponseSchema = z
+  .object({
+    success: z.literal(true),
+    emailVerificationToken: z
+      .string()
+      .openapi({ example: '550e8400-e29b-41d4-a716-446655440000' }),
+  })
+  .openapi('VerifyEmailCodeResponse');
 
 export const LoginRequestSchema = z
   .object({
@@ -230,7 +256,8 @@ export function registerAuthPaths(reg: OpenAPIRegistry) {
     path: '/api/v1/auth/signup',
     summary: '회원가입',
     description:
-      '이메일/비밀번호로 회원가입합니다. ' +
+      '이메일/비밀번호로 회원가입합니다. emailVerificationToken은 ' +
+      '/api/v1/auth/email/verify-code로 사전에 발급받아야 합니다. ' +
       '이메일 확인이 켜져 있으면 confirmation_required 상태를, 꺼져 있으면 즉시 세션을 반환합니다.',
     security: [{ ApiKeyAuth: [] }],
     request: {
@@ -245,7 +272,7 @@ export function registerAuthPaths(reg: OpenAPIRegistry) {
       },
       400: {
         description:
-          '잘못된 요청 또는 Supabase 에러(이미 가입된 이메일 등)',
+          '잘못된 요청, 이메일 인증 미완료/만료, 또는 Supabase 에러(이미 가입된 이메일 등)',
         content: { 'application/json': { schema: ErrorResponseSchema } },
       },
       401: {
@@ -314,6 +341,82 @@ export function registerAuthPaths(reg: OpenAPIRegistry) {
         description: '인증 성공',
         content: {
           'application/json': { schema: VerifyPhoneCodeResponseSchema },
+        },
+      },
+      400: {
+        description: '인증번호 불일치 또는 만료',
+        content: { 'application/json': { schema: ErrorResponseSchema } },
+      },
+      401: {
+        description: '인증 실패',
+        content: { 'application/json': { schema: ErrorResponseSchema } },
+      },
+      403: {
+        description: '관리자가 /settings에서 이 API를 비활성화함',
+        content: { 'application/json': { schema: ErrorResponseSchema } },
+      },
+    },
+  });
+
+  reg.registerPath({
+    method: 'post',
+    path: '/api/v1/auth/email/send-code',
+    summary: '이메일 인증번호 발송',
+    description:
+      '회원가입 전 이메일 본인확인용 6자리 인증번호를 메일로 발송합니다(3분 유효, ' +
+      '재전송 60초 쿨다운, 시간당 5회 제한).',
+    security: [{ ApiKeyAuth: [] }],
+    request: {
+      body: {
+        content: { 'application/json': { schema: SendEmailCodeRequestSchema } },
+      },
+    },
+    responses: {
+      200: {
+        description: '발송 성공',
+        content: {
+          'application/json': { schema: SendPhoneCodeResponseSchema },
+        },
+      },
+      400: {
+        description: '이메일 형식 오류',
+        content: { 'application/json': { schema: ErrorResponseSchema } },
+      },
+      401: {
+        description: '인증 실패',
+        content: { 'application/json': { schema: ErrorResponseSchema } },
+      },
+      403: {
+        description: '관리자가 /settings에서 이 API를 비활성화함',
+        content: { 'application/json': { schema: ErrorResponseSchema } },
+      },
+      429: {
+        description: '재전송 쿨다운 또는 시간당 발송 한도 초과',
+        content: { 'application/json': { schema: ErrorResponseSchema } },
+      },
+    },
+  });
+
+  reg.registerPath({
+    method: 'post',
+    path: '/api/v1/auth/email/verify-code',
+    summary: '이메일 인증번호 확인',
+    description:
+      '발송된 인증번호를 검증하고, 성공 시 회원가입에 사용할 emailVerificationToken을 ' +
+      '발급합니다(30분 이내 1회 사용 가능).',
+    security: [{ ApiKeyAuth: [] }],
+    request: {
+      body: {
+        content: {
+          'application/json': { schema: VerifyEmailCodeRequestSchema },
+        },
+      },
+    },
+    responses: {
+      200: {
+        description: '인증 성공',
+        content: {
+          'application/json': { schema: VerifyEmailCodeResponseSchema },
         },
       },
       400: {

@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { validateApiKey, requireAuthApiEnabled } from '@/libs/openapi/auth';
 import { createClient } from '@/libs/supabase/server';
 import { applySignupBenefits } from '@/libs/supabase/queries/signup-benefits';
+import {
+  consumeEmailVerificationToken,
+  restoreEmailVerificationToken,
+} from '@/libs/supabase/queries/email-verification';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -10,6 +14,7 @@ interface SignupRequestBody {
   email?: string;
   password?: string;
   fullName?: string;
+  emailVerificationToken?: string;
   referralCode?: string;
 }
 
@@ -27,15 +32,29 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
   }
 
-  const { email, password, fullName, referralCode } = body;
-  if (!email || !password) {
+  const { email, password, fullName, emailVerificationToken, referralCode } =
+    body;
+  if (!email || !password || !emailVerificationToken) {
     return NextResponse.json(
-      { error: 'email, password는 필수입니다.' },
+      { error: 'email, password, emailVerificationToken은 필수입니다.' },
       { status: 400 },
     );
   }
 
   try {
+    // 원자적 CAS로 먼저 소비 처리한다 — 동시 요청이 같은 인증으로 계정을 중복 생성하지
+    // 못하도록 auth.signUp() 이전에 소비해야 한다(TOCTOU 레이스 방지).
+    const consumedTokenId = await consumeEmailVerificationToken(
+      email,
+      emailVerificationToken,
+    );
+    if (!consumedTokenId) {
+      return NextResponse.json(
+        { error: '이메일 인증이 필요하거나 인증이 만료되었습니다.' },
+        { status: 400 },
+      );
+    }
+
     const supabase = createClient();
     // public.profiles row는 handle_new_user() 트리거가 raw_user_meta_data->>'full_name'을
     // 읽어 자동으로 생성하므로, 여기서 별도 profiles insert를 하지 않는다.
@@ -46,6 +65,13 @@ export async function POST(request: NextRequest) {
     });
 
     if (error) {
+      // 이메일 중복 등 이후 단계 실패 — 방금 소비한 토큰을 되돌려 인증부터 다시 하지
+      // 않고 재시도할 수 있게 한다. 복원이 실패해도 원래 에러 메시지는 그대로 보여준다.
+      try {
+        await restoreEmailVerificationToken(consumedTokenId);
+      } catch (restoreError) {
+        console.error('[auth/signup] 토큰 복원 실패:', restoreError);
+      }
       // Supabase auth-js는 인증 서버 응답이 예상 형식(error_description/msg)이 아니면
       // 응답 바디를 그대로 JSON.stringify해 message로 채우는 폴백이 있어, 드물게
       // error.message가 "{}" 같은 의미 없는 문자열이 될 수 있다(예: 내장 이메일 발송
