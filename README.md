@@ -34,8 +34,7 @@ gospelfix.cms.api/
 ├── src/
 │   ├── app/
 │   │   ├── auth/callback/     # OAuth 콜백
-│   │   ├── sign/in/           # 로그인
-│   │   ├── sign/up/           # 회원가입
+│   │   ├── sign/in/           # 로그인 (Google OAuth 전용)
 │   │   ├── globals.css
 │   │   ├── layout.tsx
 │   │   └── page.tsx
@@ -75,7 +74,9 @@ NEXT_PUBLIC_SUPABASE_URL=https://xxx.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=sb_publishable_...
 SUPABASE_SERVICE_ROLE_KEY=sb_secret_...   # 서버 전용, 절대 클라이언트 노출 금지
 
-# OAuth (Supabase 대시보드에서 설정 시 사용)
+# OAuth
+# GOOGLE_OAUTH_*는 앱 코드가 읽지 않는다 — 관리자 로그인용 값은 Supabase 대시보드
+# (Authentication → Providers → Google)에만 입력한다.
 GOOGLE_OAUTH_ID=
 GOOGLE_OAUTH_SECRET=
 KAKAO_CLIENT_ID=
@@ -162,10 +163,20 @@ CREATE POLICY "profiles_update_own" ON public.profiles
 
 ## 인증 흐름
 
-- `/sign/in`, `/sign/up` — 공개
-- `/auth/callback` — OAuth 콜백
+- `/sign/in` — 공개. **Google 로그인 버튼만** 있다 (이메일/비밀번호 로그인·가입은 제거됨)
+- `/auth/callback` — OAuth 콜백. 코드를 세션으로 교환한 뒤 `profiles.role='admin'`인지 확인하고, 아니면 세션을 지우고 `/sign/in?error=not_admin`으로 보낸다
 - 그 외 모든 경로 — 보호 (비인증 시 `/sign/in` 리다이렉트)
-- 로그인 상태에서 `/sign/in` · `/sign/up` 접근 시 `/`로 리다이렉트
+- 로그인 상태에서 `/sign/in` 접근 시 `/users`로 리다이렉트
+
+### 관리자 추가 절차
+
+구글 로그인은 아무 계정이나 시도할 수 있고, 첫 로그인 시 `profiles`에 `role='user'`로 생성된다(거부 메시지가 뜨는 것이 정상). 관리자는 `/users`에서 해당 계정을 `admin`으로 승격한다. **최초 관리자**는 `/users`에 들어갈 수 없으므로 DB에서 직접 `profiles.role='admin'`으로 지정한다.
+
+### 구글 로그인 설정 (코드 밖)
+
+1. Google Cloud Console → OAuth 클라이언트(웹) → 승인된 리디렉션 URI에 `https://<project-ref>.supabase.co/auth/v1/callback`
+2. Supabase → Authentication → Providers → Google 활성화, Client ID/Secret 입력
+3. Supabase → Authentication → URL Configuration → Redirect URLs에 `http://localhost:3001/auth/callback`와 운영 도메인 `/auth/callback` 추가
 
 `middleware.ts` → `src/libs/supabase/middleware.ts`의 `updateSession()`이 모든 요청에서 세션을 갱신하고 라우트 접근을 결정합니다.
 

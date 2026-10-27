@@ -31,6 +31,8 @@ yarn shadcn add <component>   # 추가 후 import 경로를 '@/libs/utils'로 �
 
 `src/middleware.ts`가 라우팅의 단일 관문이다: `/api/v1/*`·`/api/openapi.json`은 세션 조회 없이 CORS 헤더만 주입해 통과, 나머지는 `updateSession()`(`src/libs/supabase/middleware.ts`)으로 세션 갱신 후 미인증이면 `/sign/in`으로 리다이렉트. **새 관리자 경로를 추가하면 `ADMIN_PATHS`와 `config.matcher` 두 곳 모두 수정해야 한다.** 미들웨어는 로그인 여부만 보고, `admin` 역할 검증은 `requireAdminPage()`/`requireAdminApi()`(`queries/auth.ts`)가 `profiles.role`로 한다.
 
+관리자 로그인은 **Google OAuth 전용**이다(`/sign/in` 버튼 → `signInWithOAuth`, 브라우저 클라이언트). `/auth/callback`이 세션 교환 직후 `role='admin'`을 검증하고 비관리자는 `signOut` 후 `/sign/in?error=not_admin`으로 보낸다 — 세션을 남기면 미들웨어(`/sign/in`→`/users`)와 `requireAdminPage`(`/users`→`/sign/in`)가 무한 리다이렉트한다. 구글 가입은 아무나 가능하므로 신규 계정은 `role='user'`이고 `/users`에서 수동 승격한다.
+
 ### Supabase 클라이언트 4종 (`src/libs/supabase/`)
 
 | 파일 | 키 | 용도 |
@@ -46,7 +48,7 @@ yarn shadcn add <component>   # 추가 후 import 경로를 '@/libs/utils'로 �
 
 - 모든 Supabase 쿼리(`select/insert/update/delete`)는 `src/libs/supabase/queries/<도메인>[.admin|.server].ts`에만 작성. 컴포넌트·page에서 `createClient()`로 직접 쿼리 금지.
 - `'use server'` 파일(`actions.ts`)에는 **뮤테이션만**. 읽기는 Server Component에서 queries 함수를 직접 import.
-- **`(admin)/**/actions.ts`의 모든 export 액션은 첫 줄이 `await requireAdminPage();`** (예외: `sign/in/actions.ts`). layout/middleware는 Server Action POST를 막지 못하고 `*.admin.ts`는 service_role이라, 빠뜨리면 비로그인 사용자가 데이터를 지울 수 있다. 액션 추가 시 `grep -c '^export async function'`과 `grep -c 'await requireAdminPage'` 개수를 맞춰볼 것.
+- **`(admin)/**/actions.ts`의 모든 export 액션은 첫 줄이 `await requireAdminPage();`**. layout/middleware는 Server Action POST를 막지 못하고 `*.admin.ts`는 service_role이라, 빠뜨리면 비로그인 사용자가 데이터를 지울 수 있다. 액션 추가 시 `grep -c '^export async function'`과 `grep -c 'await requireAdminPage'` 개수를 맞춰볼 것.
 - cms.api 내부 페이지가 `/api/v1/*`를 클라이언트에서 재사용하지 않는다(`INTERNAL_API_KEY` 노출). `requireAdminPage()` + Server Action + queries 공용 함수로 별도 구현.
 - sort_order 일괄 변경은 `Promise.all` + N개 UPDATE 대신 `upsert({ onConflict: 'id' })` 단일 쿼리. Supabase JS 반복 insert는 트랜잭션이 아니므로 배치 insert는 실패 시 직접 롤백 쿼리 필요.
 
