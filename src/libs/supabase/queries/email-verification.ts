@@ -1,4 +1,5 @@
 import { randomInt } from 'crypto';
+import nodemailer from 'nodemailer';
 import { createAdminClient } from '@/libs/supabase/admin';
 
 export const CODE_TTL_MS = 3 * 60 * 1000;
@@ -27,21 +28,21 @@ export function normalizeEmail(email: string): string {
 }
 
 /**
- * Resend REST API로 인증번호 메일을 발송한다.
- * env(RESEND_API_KEY/EMAIL_FROM)가 없으면 개발 환경에서만 콘솔 로그로 대체한다 —
+ * Gmail SMTP(앱 비밀번호)로 인증번호 메일을 발송한다.
+ * env(GMAIL_USER/GMAIL_APP_PASSWORD)가 없으면 개발 환경에서만 콘솔 로그로 대체한다 —
  * 운영에서 조용히 목업으로 빠지면 코드가 미발송된 채 성공 처리되므로 예외를 던진다.
  */
 async function sendVerificationEmail(
   email: string,
   code: string,
 ): Promise<void> {
-  const apiKey = process.env.RESEND_API_KEY;
-  const from = process.env.EMAIL_FROM;
+  const user = process.env.GMAIL_USER;
+  const pass = process.env.GMAIL_APP_PASSWORD;
 
-  if (!apiKey || !from) {
+  if (!user || !pass) {
     if (process.env.NODE_ENV === 'production') {
       throw new Error(
-        '이메일 발송 설정(RESEND_API_KEY/EMAIL_FROM)이 누락되었습니다.',
+        '이메일 발송 설정(GMAIL_USER/GMAIL_APP_PASSWORD)이 누락되었습니다.',
       );
     }
     console.log(
@@ -50,26 +51,21 @@ async function sendVerificationEmail(
     return;
   }
 
-  const res = await fetch('https://api.resend.com/emails', {
-    method: 'POST',
-    signal: AbortSignal.timeout(10_000),
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      from,
-      to: email,
-      subject: '[GOSPELFIX] 이메일 인증번호 안내',
-      html:
-        `<p>회원가입 이메일 인증번호입니다.</p>` +
-        `<p style="font-size:24px;font-weight:bold;letter-spacing:4px">${code}</p>` +
-        `<p>3분 이내에 입력해 주세요. 본인이 요청하지 않았다면 이 메일을 무시해 주세요.</p>`,
-    }),
+  const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: { user, pass },
+    connectionTimeout: 10_000,
+    socketTimeout: 10_000,
   });
-  if (!res.ok) {
-    throw new Error(`이메일 발송 실패: ${res.status} ${await res.text()}`);
-  }
+  await transporter.sendMail({
+    from: `GOSPELFIX <${user}>`,
+    to: email,
+    subject: '[GOSPELFIX] 이메일 인증번호 안내',
+    html:
+      `<p>회원가입 이메일 인증번호입니다.</p>` +
+      `<p style="font-size:24px;font-weight:bold;letter-spacing:4px">${code}</p>` +
+      `<p>3분 이내에 입력해 주세요. 본인이 요청하지 않았다면 이 메일을 무시해 주세요.</p>`,
+  });
   console.log(`[EMAIL SENT] ${maskEmail(email)}`);
 }
 
