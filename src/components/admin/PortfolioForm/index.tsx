@@ -206,7 +206,7 @@ export default function PortfolioForm({
                 onReorder={reorderImages}
                 onRemove={removeImage}
                 onAddFiles={handleFilesSelect}
-                helperText="JPG, PNG, WebP, AVIF ·최대 10MB · 다중 선택 가능"
+                helperText="JPG, PNG, WebP, AVIF · 최대 10MB · 다중 선택 가능"
               />
             </div>
 
