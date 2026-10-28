@@ -31,16 +31,20 @@ export interface SortableImageGridProps {
   helperText: string;
   addButtonLabel?: string;
   className?: string;
+  /** 카드 비율 Tailwind 클래스 (리터럴로 전달해야 JIT가 감지한다). 기본 4:5 */
+  aspectClassName?: string;
 }
 
 function SortableImageCard({
   img,
   index,
   onRemove,
+  aspectClassName,
 }: {
   img: ImageItem;
   index: number;
   onRemove: (index: number) => void;
+  aspectClassName: string;
 }) {
   const {
     attributes,
@@ -62,7 +66,7 @@ function SortableImageCard({
       style={style}
       {...attributes}
       {...listeners}
-      className={`group relative aspect-[4/5] rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-700 cursor-grab active:cursor-grabbing touch-none ${
+      className={`group relative ${aspectClassName} rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-700 cursor-grab active:cursor-grabbing touch-none ${
         isDragging ? 'opacity-40 z-10' : ''
       }`}
     >
@@ -104,6 +108,7 @@ export default function SortableImageGrid({
   helperText,
   addButtonLabel = '이미지 추가',
   className,
+  aspectClassName = 'aspect-[4/5]',
 }: SortableImageGridProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -143,13 +148,14 @@ export default function SortableImageGrid({
                 img={img}
                 index={index}
                 onRemove={onRemove}
+                aspectClassName={aspectClassName}
               />
             ))}
             {canAdd && (
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className="aspect-[4/5] rounded-xl border-2 border-dashed border-gray-200 dark:border-gray-600 flex flex-col items-center justify-center gap-1.5 text-gray-400 hover:border-gray-300 dark:hover:border-gray-500 hover:text-gray-500 transition-colors"
+                className={`${aspectClassName} rounded-xl border-2 border-dashed border-gray-200 dark:border-gray-600 flex flex-col items-center justify-center gap-1.5 text-gray-400 hover:border-gray-300 dark:hover:border-gray-500 hover:text-gray-500 transition-colors`}
               >
                 <Plus size={24} />
                 <span className="text-xs">{addButtonLabel}</span>

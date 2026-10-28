@@ -224,7 +224,7 @@ export default function PostForm({
                   썸네일 대표 이미지
                 </label>
                 <span className="text-xs text-gray-400">
-                  권장 사이즈: 1080 × 1350px
+                  권장 사이즈: 1640 × 1000px (1.64 : 1)
                 </span>
               </div>
               <SortableImageGrid
@@ -233,6 +233,7 @@ export default function PostForm({
                 onRemove={removeImage}
                 onAddFiles={handleImagesSelect}
                 maxImages={MAX_IMAGES}
+                aspectClassName="aspect-[1.64/1]"
                 helperText={`JPG, PNG, WebP · 최대 5MB · 최대 ${MAX_IMAGES}장`}
               />
             </div>
