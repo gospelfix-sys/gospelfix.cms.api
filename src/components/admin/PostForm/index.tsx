@@ -234,7 +234,7 @@ export default function PostForm({
                 onAddFiles={handleImagesSelect}
                 maxImages={MAX_IMAGES}
                 aspectClassName="aspect-[1.64/1]"
-                helperText={`JPG, PNG, WebP · 최대 5MB · 최대 ${MAX_IMAGES}장`}
+                helperText={`JPG, PNG, WebP, AVIF ·최대 5MB · 최대 ${MAX_IMAGES}장`}
               />
             </div>
 
@@ -274,7 +274,7 @@ export default function PostForm({
                 onRemove={removePortfolioImage}
                 onAddFiles={handlePortfolioImagesSelect}
                 maxImages={MAX_IMAGES}
-                helperText={`JPG, PNG, WebP · 최대 5MB · 최대 ${MAX_IMAGES}장`}
+                helperText={`JPG, PNG, WebP, AVIF ·최대 5MB · 최대 ${MAX_IMAGES}장`}
               />
             </div>
           </div>
