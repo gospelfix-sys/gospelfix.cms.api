@@ -397,7 +397,7 @@ export default function RichEditor({
 
   return (
     <>
-      <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden bg-white dark:bg-gray-900">
+      <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-clip bg-white dark:bg-gray-900">
         {/* 툴바 — 모바일 상단 고정 헤더(h-14) 아래, 데스크톱은 뷰포트 맨 위에 고정 */}
         <div className="sticky top-14 lg:top-0 z-20 flex flex-wrap items-center gap-0.5 p-2 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
           <ToolbarButton
