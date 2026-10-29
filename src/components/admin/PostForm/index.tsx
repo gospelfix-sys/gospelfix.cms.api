@@ -1,9 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { uploadFile } from '@/libs/supabase/queries/uploadFile';
-import { slugify } from '@/libs/utils';
+import { generateNumericSlug } from '@/libs/utils';
 import { useImageList } from '@/hooks/useImageList';
 import SortableImageGrid from '@/components/admin/shared/SortableImageGrid';
 import RichEditor from '@/components/admin/RichEditor';
@@ -85,10 +85,10 @@ export default function PostForm({
     validation: 'reject-batch',
   });
 
-  const handleTitleChange = (value: string) => {
-    setTitle(value);
-    if (!initialValues?.slug) setSlug(slugify(value));
-  };
+  // 신규 글은 SSR/하이드레이션 불일치를 피하려고 마운트 후 숫자 슬러그를 채운다.
+  useEffect(() => {
+    if (!initialValues?.slug) setSlug(generateNumericSlug());
+  }, [initialValues?.slug]);
 
   const handleSave = async () => {
     if (loading) return;
@@ -194,7 +194,7 @@ export default function PostForm({
               <input
                 type="text"
                 value={title}
-                onChange={(e) => handleTitleChange(e.target.value)}
+                onChange={(e) => setTitle(e.target.value)}
                 placeholder="글 제목을 입력하세요"
                 className={INPUT_CLASS}
               />
@@ -208,9 +208,8 @@ export default function PostForm({
               <input
                 type="text"
                 value={slug}
-                onChange={(e) => setSlug(e.target.value)}
-                placeholder="url-friendly-slug"
-                className={`${INPUT_CLASS} font-mono`}
+                disabled
+                className={`${INPUT_CLASS} font-mono bg-gray-50 dark:bg-gray-800 text-gray-500 opacity-50 cursor-not-allowed`}
               />
               <p className="mt-1 text-xs text-gray-400">
                 API URL: /api/v1/blog/{slug || 'slug'}

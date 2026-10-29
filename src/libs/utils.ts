@@ -6,16 +6,10 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 /**
- * 제목 → URL 슬러그 변환.
+ * 고유한 숫자 슬러그 생성.
  *
- * ProductForm/PostForm이 각자 갖고 있던 구현을 합친 것으로,
- * 라틴 확장(À-ɏ)까지 허용하는 더 포용적인 PostForm 버전을 정본으로 삼는다.
+ * 제목에서 파생하면 한글이 URL에 섞이므로, 밀리초 타임스탬프를 슬러그로 쓴다.
  */
-export function slugify(text: string): string {
-  return text
-    .toLowerCase()
-    .replace(/\s+/g, '-')
-    .replace(/[^\wÀ-ɏ가-힣-]/g, '')
-    .replace(/-+/g, '-')
-    .replace(/^-|-$/g, '');
+export function generateNumericSlug(): string {
+  return String(Date.now());
 }
