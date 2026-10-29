@@ -14,6 +14,7 @@ const SLUG_META: Record<string, { method: string; path: string }> = {
   email_send_code: { method: 'POST', path: '/api/v1/auth/email/send-code' },
   email_verify_code: { method: 'POST', path: '/api/v1/auth/email/verify-code' },
   kakao: { method: 'POST', path: '/api/v1/auth/kakao' },
+  google: { method: 'POST', path: '/api/v1/auth/google' },
 };
 
 interface AuthApiConfigCardProps {

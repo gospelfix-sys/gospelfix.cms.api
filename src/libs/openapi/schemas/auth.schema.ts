@@ -98,6 +98,27 @@ export const KakaoLoginRequestSchema = z
   })
   .openapi('KakaoLoginRequest');
 
+export const GoogleLoginRequestSchema = z
+  .object({
+    code: z.string().openapi({
+      example: '4/0AY0e-g7...',
+      description:
+        '구글 인가 코드. main이 구글 인가 URL로 리다이렉트를 받은 뒤 state 검증까지 마친 ' +
+        'code만 전달해야 한다 — state 자체는 main이 검증하고 cms.api는 검증하지 않는다.',
+    }),
+    redirectUri: z.string().openapi({
+      example: 'https://example.com/api/auth/google/callback',
+      description:
+        '구글 인가 요청 시 사용한 redirect_uri와 정확히 일치해야 한다.',
+    }),
+    referralCode: z.string().optional().openapi({
+      example: 'AB23CD45',
+      description:
+        '추천인의 8자리 추천인 코드(선택). 신규 가입자에게만 적용된다.',
+    }),
+  })
+  .openapi('GoogleLoginRequest');
+
 export const RefreshRequestSchema = z
   .object({
     refreshToken: z.string().openapi({ example: 'v1.MRefreshTokenExample...' }),
@@ -163,6 +184,18 @@ export const KakaoLoginResponseSchema = z
     }),
   })
   .openapi('KakaoLoginResponse');
+
+export const GoogleLoginResponseSchema = z
+  .object({
+    user: UserResponseSchema.nullable(),
+    session: SessionSchema,
+    isNewUser: z.boolean().openapi({
+      example: true,
+      description:
+        '이번 요청으로 신규 가입 처리되었는지 여부. true면 가입 쿠폰/추천인 코드가 함께 발급됨.',
+    }),
+  })
+  .openapi('GoogleLoginResponse');
 
 export const RefreshResponseSchema = z
   .object({
@@ -482,6 +515,43 @@ export function registerAuthPaths(reg: OpenAPIRegistry) {
       400: {
         description:
           'code/redirectUri 누락, 카카오 토큰 교환 실패, 또는 카카오 계정 이메일 동의 누락',
+        content: { 'application/json': { schema: ErrorResponseSchema } },
+      },
+      401: {
+        description: '인증 실패',
+        content: { 'application/json': { schema: ErrorResponseSchema } },
+      },
+      403: {
+        description: '관리자가 /settings에서 이 API를 비활성화함',
+        content: { 'application/json': { schema: ErrorResponseSchema } },
+      },
+    },
+  });
+
+  reg.registerPath({
+    method: 'post',
+    path: '/api/v1/auth/google',
+    summary: '구글 로그인',
+    description:
+      '구글 인가 코드를 받아 구글 토큰/프로필을 서버에서 직접 조회하고, 해당 이메일로 ' +
+      '가입된 계정이 없으면 신규 가입(가입 쿠폰/추천인 코드 발급 포함) 후, 있으면 재로그인 ' +
+      '처리해 Supabase 세션을 발급합니다. 구글이 이메일 소유를 확인한(email_verified) 계정만 ' +
+      '허용합니다. main이 구글 인가 URL 생성과 state 검증을 담당하며, 이 API는 이미 검증된 ' +
+      'code만 받습니다.',
+    security: [{ ApiKeyAuth: [] }],
+    request: {
+      body: {
+        content: { 'application/json': { schema: GoogleLoginRequestSchema } },
+      },
+    },
+    responses: {
+      200: {
+        description: '로그인/가입 성공',
+        content: { 'application/json': { schema: GoogleLoginResponseSchema } },
+      },
+      400: {
+        description:
+          'code/redirectUri 누락, 구글 토큰 교환 실패, 또는 이메일 미인증 구글 계정',
         content: { 'application/json': { schema: ErrorResponseSchema } },
       },
       401: {
