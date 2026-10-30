@@ -29,8 +29,8 @@ function toPortfolio(row: any): Portfolio {
 function toPortfolioPayload(input: PortfolioFormInput) {
   return {
     title: input.title,
-    category: input.category || null,
-    description: input.description || null,
+    category: input.category || '',
+    description: input.description || '',
     tags: input.tags,
     thumbnail_url: input.thumbnail_url || null,
     site_url: input.site_url || '',
