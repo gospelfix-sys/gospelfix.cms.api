@@ -1,6 +1,7 @@
 'use client';
 
 import { Suspense, useState } from 'react';
+import Image from 'next/image';
 import { useSearchParams } from 'next/navigation';
 import { createClient } from '@/libs/supabase/client';
 
@@ -54,7 +55,17 @@ export default function SignInPage() {
   return (
     <div className="min-h-screen bg-gray-100 flex items-center justify-center">
       <div className="bg-white rounded-2xl shadow-sm p-6 sm:p-10 w-full max-w-md mx-4 sm:mx-0">
-        <h1 className="text-2xl font-bold text-gray-900 mb-8">GOSPELFIX Admin</h1>
+        <div className="flex flex-col items-center gap-5 mb-8">
+          <Image
+            src="/logo.jpg"
+            alt="GOSPELFIX 로고"
+            width={120}
+            height={120}
+            priority
+            className="rounded-full object-cover size-[120px]"
+          />
+          <h1 className="text-2xl font-bold text-gray-900">GOSPELFIX Admin</h1>
+        </div>
         <Suspense>
           <SignInForm />
         </Suspense>
