@@ -8,7 +8,7 @@ Next.js 14 (App Router) + Supabase 기반 **관리자 CMS이자 서버-투-서�
 
 ## 명령어
 
-**yarn만 사용 (npm 금지).** Node >= 22.
+**yarn만 사용 (npm 금지).** Node 24.x (Vercel이 `>=` 범위를 최신 메이저로 자동 승급하므로 `engines.node`는 `24.x`로 고정).
 
 ```bash
 yarn dev      # http://localhost:3001
