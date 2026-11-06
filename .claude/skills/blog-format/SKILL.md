@@ -1,6 +1,6 @@
 ---
 name: blog-format
-description: 블로그 글 초안을 blog-editorial-formatter 에이전트에게 전달해 RichEditor(TipTap) 호환 HTML로 정리하고, 요청 시 관리자에 미발행 초안으로 저장합니다.
+description: 블로그 글 초안을 blog-editorial-formatter 에이전트에게 전달해 리스트 중심의 RichEditor(TipTap) 호환 HTML(본문 h1 없음)로 정리하고, 요청 시 관리자에 미발행 초안으로 저장합니다.
 argument-hint: "[정리할 글, 필요시 '저장까지' 명시]"
 model: sonnet
 user-invocable: true

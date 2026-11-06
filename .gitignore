@@ -171,3 +171,5 @@ supabase/backups/
 
 # SFTP 접속 정보 (비밀번호가 들어갈 수 있음)
 .vscode/sftp.json
+
+.playwright-mcp
