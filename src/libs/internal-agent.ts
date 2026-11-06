@@ -28,6 +28,12 @@ const SANITIZE_OPTIONS: sanitizeHtml.IOptions = {
     'u',
     's',
     'a',
+    'table',
+    'thead',
+    'tbody',
+    'tr',
+    'th',
+    'td',
   ],
   allowedAttributes: {
     // target은 허용하지 않는다 — reverse tabnabbing 방지(정상 에디터도 target을 만들지 않음)

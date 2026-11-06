@@ -13,6 +13,7 @@ import Link from '@tiptap/extension-link';
 import Underline from '@tiptap/extension-underline';
 import TiptapImage from '@tiptap/extension-image';
 import TextAlign from '@tiptap/extension-text-align';
+import { TableKit } from '@tiptap/extension-table';
 import {
   Bold,
   Italic,
@@ -30,6 +31,8 @@ import {
   Unlink,
   ChevronDown,
   ImagePlus,
+  Paperclip,
+  Table as TableIcon,
   AlignLeft,
   AlignCenter,
   AlignRight,
@@ -213,6 +216,43 @@ async function uploadContentImage(file: File, bucket: string): Promise<string> {
   return publicUrl;
 }
 
+const CONTENT_ATTACHMENT_MAX_BYTES = 20 * 1024 * 1024;
+
+// 첨부 허용 확장자 → 업로드 contentType (브라우저가 .md의 MIME을 비워 보내는 경우가 있어 확장자로 고정)
+// Map을 쓰는 이유: 객체 리터럴은 'constructor' 같은 프로토타입 키가 허용 목록을 통과한다
+const ATTACHMENT_CONTENT_TYPES = new Map<string, string>([
+  ['md', 'text/markdown'],
+  ['zip', 'application/zip'],
+]);
+const ATTACHMENT_ACCEPT = '.md,.zip,text/markdown,application/zip';
+
+// 본문에 첨부하는 .md/.zip 파일을 업로드하고, 클릭 시 원래 파일명으로 내려받는 공개 URL을 반환한다
+async function uploadContentAttachment(
+  file: File,
+  bucket: string,
+): Promise<string> {
+  const ext = file.name.split('.').pop()?.toLowerCase() ?? '';
+  const contentType = ATTACHMENT_CONTENT_TYPES.get(ext);
+  if (!contentType) {
+    throw new Error(`${file.name}: .md, .zip 파일만 첨부할 수 있습니다.`);
+  }
+  if (file.size > CONTENT_ATTACHMENT_MAX_BYTES) {
+    throw new Error(`${file.name}: 20MB 이하 파일만 첨부할 수 있습니다.`);
+  }
+  const supabase = createClient();
+  const path = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+  const { data, error } = await supabase.storage
+    .from(bucket)
+    .upload(path, file, { upsert: false, contentType });
+  if (error) throw new Error(`파일 업로드 실패: ${error.message}`);
+  const {
+    data: { publicUrl },
+  } = supabase.storage
+    .from(bucket)
+    .getPublicUrl(data.path, { download: file.name });
+  return publicUrl;
+}
+
 interface RichEditorProps {
   value: string;
   onChange: (html: string) => void;
@@ -265,12 +305,14 @@ export default function RichEditor({
 }: RichEditorProps) {
   const [alertMessage, setAlertMessage] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const attachmentInputRef = useRef<HTMLInputElement>(null);
   const editor = useEditor({
     extensions: [
       StarterKit,
       Underline,
       CustomTextStyle,
       TextAlign.configure({ types: ['heading', 'paragraph'] }),
+      TableKit,
       TiptapImage.configure({
         inline: false,
         HTMLAttributes: { class: 'rounded-lg max-w-full' },
@@ -388,6 +430,31 @@ export default function RichEditor({
       } catch (err) {
         setAlertMessage(
           err instanceof Error ? err.message : '이미지 업로드에 실패했습니다.',
+        );
+      }
+    }
+  };
+
+  const insertAttachmentFiles = async (files: FileList | null) => {
+    if (!editor || !files || files.length === 0) return;
+    for (const file of Array.from(files)) {
+      try {
+        const url = await uploadContentAttachment(file, bucket);
+        editor
+          .chain()
+          .focus()
+          .insertContent([
+            {
+              type: 'text',
+              text: file.name,
+              marks: [{ type: 'link', attrs: { href: url } }],
+            },
+            { type: 'text', text: ' ' },
+          ])
+          .run();
+      } catch (err) {
+        setAlertMessage(
+          err instanceof Error ? err.message : '파일 첨부에 실패했습니다.',
         );
       }
     }
@@ -524,6 +591,18 @@ export default function RichEditor({
           >
             <Minus size={15} />
           </ToolbarButton>
+          <ToolbarButton
+            onClick={() =>
+              editor
+                .chain()
+                .focus()
+                .insertTable({ rows: 3, cols: 2, withHeaderRow: true })
+                .run()
+            }
+            title="표 삽입 (3×2, 머리글 포함)"
+          >
+            <TableIcon size={15} />
+          </ToolbarButton>
 
           <Divider />
 
@@ -557,6 +636,23 @@ export default function RichEditor({
             className="hidden"
             onChange={(e) => {
               void insertImages(e.target.files);
+              e.target.value = '';
+            }}
+          />
+          <ToolbarButton
+            onClick={() => attachmentInputRef.current?.click()}
+            title="md·zip 파일 첨부 (다운로드 링크로 삽입)"
+          >
+            <Paperclip size={15} />
+          </ToolbarButton>
+          <input
+            ref={attachmentInputRef}
+            type="file"
+            accept={ATTACHMENT_ACCEPT}
+            multiple
+            className="hidden"
+            onChange={(e) => {
+              void insertAttachmentFiles(e.target.files);
               e.target.value = '';
             }}
           />

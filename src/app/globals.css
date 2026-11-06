@@ -130,6 +130,14 @@ body {
   font-style: italic;
 }
 .rich-editor-content hr { border: none; border-top: 1px solid oklch(0.922 0 0); margin: 1rem 0; }
+.rich-editor-content table { width: 100%; border-collapse: collapse; margin: 0.75rem 0; table-layout: auto; }
+.rich-editor-content tr > :first-child { width: 1%; white-space: nowrap; }
+.rich-editor-content th,
+.rich-editor-content td { border: 1px solid oklch(0.708 0 0); padding: 0.5rem 0.75rem; text-align: left; vertical-align: top; }
+.rich-editor-content th { background: oklch(0.97 0 0); font-weight: 700; }
+.rich-editor-content td p,
+.rich-editor-content th p { margin: 0; }
+.rich-editor-content .selectedCell { background: oklch(0.93 0.03 264); }
 .rich-editor-content a { color: oklch(0.488 0.243 264.376); text-decoration: underline; }
 .rich-editor-content strong { font-weight: 700; }
 .rich-editor-content em { font-style: italic; }
