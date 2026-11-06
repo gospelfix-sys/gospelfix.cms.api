@@ -72,7 +72,7 @@ Recoil atoms(`src/store/`)는 `AuthProvider`의 `onAuthStateChange`가 동기화
 
 ### 블로그 에디터
 
-`RichEditor`(TipTap)가 지원하는 서식은 h1~h3, 문단, 목록, 인용구, 구분선, 링크뿐. 저장 시 `sanitizeContent()`(`libs/internal-agent.ts`)의 sanitize-html 허용 목록과 일치해야 하므로 에디터 툴바를 늘리면 허용 태그도 함께 수정. 게시글 카테고리는 고정 4종(신규 템플릿/이벤트/AI 활용/UX/UI 디자인, DB CHECK 제약과 동일).
+`RichEditor`(TipTap)가 지원하는 서식은 h1~h3, 문단, 목록, 인용구, 구분선, 링크, 표(`TableKit`), 이미지, `.md`/`.zip` 첨부(다운로드 링크)다. 표 셀 병합은 툴바에 기능이 없어 관리자 에디터에서 만들 수 없다. 초안 저장 API(`/api/internal/draft-post`)만 `sanitizeContent()`(`libs/internal-agent.ts`)를 거치며, 허용 태그에 `img`가 없고 `colspan`/`rowspan`/`colgroup`도 제거되므로 에이전트가 저장하는 초안에서는 이미지와 셀 병합이 사라진다. 에디터 툴바에 서식을 추가하면 이 허용 목록도 함께 수정. 게시글 카테고리는 고정 4종(신규 템플릿/이벤트/AI 활용/UX/UI 디자인, DB CHECK 제약과 동일).
 
 본문 이미지와 `.md`/`.zip` 첨부는 브라우저에서 Storage `blogs-images` 버킷에 직접 업로드한다. 이 버킷에는 서버측 제한(`file_size_limit` 20MB, `allowed_mime_types`: jpeg/png/webp/gif/avif/markdown/zip)이 걸려 있으며 DB 상태라 코드에는 보이지 않는다. 에디터에 새 파일 형식을 추가하면 `ATTACHMENT_CONTENT_TYPES`와 버킷 `allowed_mime_types`를 함께 수정해야 한다(버킷은 `supabase-db-architect`로 변경).
 
