@@ -74,6 +74,8 @@ Recoil atoms(`src/store/`)는 `AuthProvider`의 `onAuthStateChange`가 동기화
 
 `RichEditor`(TipTap)가 지원하는 서식은 h1~h3, 문단, 목록, 인용구, 구분선, 링크뿐. 저장 시 `sanitizeContent()`(`libs/internal-agent.ts`)의 sanitize-html 허용 목록과 일치해야 하므로 에디터 툴바를 늘리면 허용 태그도 함께 수정. 게시글 카테고리는 고정 4종(신규 템플릿/이벤트/AI 활용/UX/UI 디자인, DB CHECK 제약과 동일).
 
+본문 이미지와 `.md`/`.zip` 첨부는 브라우저에서 Storage `blogs-images` 버킷에 직접 업로드한다. 이 버킷에는 서버측 제한(`file_size_limit` 20MB, `allowed_mime_types`: jpeg/png/webp/gif/avif/markdown/zip)이 걸려 있으며 DB 상태라 코드에는 보이지 않는다. 에디터에 새 파일 형식을 추가하면 `ATTACHMENT_CONTENT_TYPES`와 버킷 `allowed_mime_types`를 함께 수정해야 한다(버킷은 `supabase-db-architect`로 변경).
+
 ## DB 스키마 작업 방식
 
 `supabase/migrations/`의 001~003만 과거 기록이며 **신규 마이그레이션 파일은 작성하지 않는다.** DDL/DML은 `supabase-db-architect` 서브에이전트가 Supabase MCP(`apply_migration` / `execute_sql`)로 직접 실행하고, 결과 확인 후 쿼리 레이어 `.from()` 호출을 동기화한다. SQL 작업은 이 에이전트에 위임한다. `profiles` + `handle_new_user()` 트리거 + RLS는 README.md의 SQL 참고(최초 가입자의 `role`은 `user`이므로 관리자는 수동으로 `admin` 지정).
