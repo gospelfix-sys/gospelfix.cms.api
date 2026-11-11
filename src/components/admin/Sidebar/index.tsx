@@ -56,7 +56,7 @@ export default function Sidebar() {
       className={`
         fixed inset-y-0 right-0 z-50 w-[260px]
         lg:relative lg:inset-auto lg:z-auto lg:sticky lg:top-3 lg:w-[220px] lg:h-[calc(100vh-1.5rem)]
-        bg-white dark:bg-gray-800 shadow-sm flex flex-col p-4
+        bg-white dark:bg-gray-800 shadow-sm flex flex-col p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] lg:pb-4
         rounded-l-2xl lg:rounded-2xl
         transition-transform duration-300 ease-in-out
         ${isOpen ? 'translate-x-0' : 'translate-x-full lg:translate-x-0'}

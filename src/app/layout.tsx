@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import type { ReactNode } from 'react';
 import { ThemeProvider } from 'next-themes';
 import './globals.css';
@@ -13,6 +13,9 @@ export const metadata: Metadata = {
   icons: { apple: '/icons/apple-touch-icon.png' },
   appleWebApp: { capable: true, title: 'GF Admin', statusBarStyle: 'default' },
 };
+
+// 화면 끝까지 확장해야 env(safe-area-inset-*)가 동작한다(아이폰 홈 인디케이터 영역 대응).
+export const viewport: Viewport = { viewportFit: 'cover' };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
