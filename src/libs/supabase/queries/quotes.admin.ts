@@ -2,7 +2,7 @@ import { createAdminClient } from '@/libs/supabase/admin';
 import type { AdminQuoteDetail, AdminQuoteListItem } from '@/types/quote';
 
 const LIST_COLUMNS =
-  'id, contact_name, contact_value, contact_email, estimated_total, user_agent, referer, utm_params, created_at';
+  'id, contact_name, contact_value, contact_email, estimated_total, user_agent, referer, utm_params, created_at, viewed_at';
 
 const UUID_REGEX =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -53,4 +53,21 @@ export async function getQuoteByIdAdmin(
 
   if (error) throw new Error(error.message);
   return data as AdminQuoteDetail | null;
+}
+
+/**
+ * 견적 신청을 "읽음"으로 표시한다. 이미 읽은 건은 최초 열람 시각을 유지하도록
+ * viewed_at이 null인 행만 갱신한다.
+ */
+export async function markQuoteViewedAdmin(id: string): Promise<void> {
+  assertValidUUID(id);
+  const supabase = createAdminClient();
+
+  const { error } = await supabase
+    .from('gospelfix_quote_submissions')
+    .update({ viewed_at: new Date().toISOString() })
+    .eq('id', id)
+    .is('viewed_at', null);
+
+  if (error) throw new Error(error.message);
 }

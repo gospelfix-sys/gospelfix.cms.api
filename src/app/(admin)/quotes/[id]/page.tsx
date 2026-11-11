@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation';
 import BackToListButton from '@/components/admin/BackToListButton';
+import MarkQuoteViewed from './MarkQuoteViewed';
 import { getQuoteByIdAdmin } from '@/libs/supabase/queries/quotes.admin';
 import { parseUserAgent, formatTrafficSource } from '@/libs/user-agent';
 import { formatPrice, isSafeHttpUrl, formatDateTime } from '@/libs/format';
@@ -65,6 +66,7 @@ export default async function QuoteDetailPage({
         </p>
       </div>
       <BackToListButton href="/quotes" />
+      <MarkQuoteViewed id={quote.id} viewed={!!quote.viewed_at} />
 
       <div className="space-y-4">
         <Card title="방문 정보">

@@ -9,6 +9,8 @@ export interface AdminQuoteListItem {
   referer: string | null;
   utm_params: Record<string, string> | null;
   created_at: string;
+  /** 관리자가 상세를 처음 연 시각. null이면 아직 아무도 보지 않은 신청 */
+  viewed_at: string | null;
 }
 
 export interface QuoteSelectedItem {

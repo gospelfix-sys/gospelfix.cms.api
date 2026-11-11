@@ -46,7 +46,14 @@ export default function QuotesTable({
                 onClick={() => router.push(`/quotes/${quote.id}`)}
                 className="cursor-pointer transition-colors hover:bg-gray-50 dark:hover:bg-gray-750"
               >
-                <td className="px-4 py-3 text-gray-900 dark:text-gray-100 truncate max-w-[10rem]">
+                <td className="relative px-4 py-3 pl-6 text-gray-900 dark:text-gray-100 truncate max-w-[10rem]">
+                  {!quote.viewed_at && (
+                    <span
+                      role="img"
+                      aria-label="읽지 않음"
+                      className="absolute left-2 top-1/2 h-2 w-2 -translate-y-1/2 rounded-full bg-red-500"
+                    />
+                  )}
                   {quote.contact_name}
                 </td>
                 <td className="px-4 py-3 text-gray-600 dark:text-gray-300 hidden sm:table-cell">
