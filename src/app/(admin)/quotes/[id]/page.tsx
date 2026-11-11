@@ -1,6 +1,5 @@
 import { notFound } from 'next/navigation';
-import Link from 'next/link';
-import { ArrowLeft } from 'lucide-react';
+import BackToListButton from '@/components/admin/BackToListButton';
 import { getQuoteByIdAdmin } from '@/libs/supabase/queries/quotes.admin';
 import { parseUserAgent, formatTrafficSource } from '@/libs/user-agent';
 import { formatPrice, isSafeHttpUrl, formatDateTime } from '@/libs/format';
@@ -58,13 +57,6 @@ export default async function QuoteDetailPage({
   return (
     <div>
       <div className="mb-6">
-        <Link
-          href="/quotes"
-          className="inline-flex items-center gap-1 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 mb-2"
-        >
-          <ArrowLeft size={14} />
-          목록으로
-        </Link>
         <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100">
           {quote.contact_name}님의 견적 신청
         </h1>
@@ -72,6 +64,7 @@ export default async function QuoteDetailPage({
           {formatDateTime(quote.created_at)}
         </p>
       </div>
+      <BackToListButton href="/quotes" />
 
       <div className="space-y-4">
         <Card title="방문 정보">

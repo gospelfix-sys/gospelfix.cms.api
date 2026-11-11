@@ -1,6 +1,5 @@
 import { notFound } from 'next/navigation';
-import Link from 'next/link';
-import { ArrowLeft } from 'lucide-react';
+import BackToListButton from '@/components/admin/BackToListButton';
 import { getProductByIdAdmin } from '@/libs/supabase/queries/products.admin';
 import { getProfileById } from '@/libs/supabase/queries/account';
 import { getProductCategoryLabelMap } from '@/libs/supabase/queries/product-categories.admin';
@@ -83,13 +82,6 @@ export default async function ProductDetailPage({
   return (
     <div>
       <div className="mb-6">
-        <Link
-          href="/products"
-          className="inline-flex items-center gap-1 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 mb-2"
-        >
-          <ArrowLeft size={14} />
-          목록으로
-        </Link>
         <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100">
           {product.name}
         </h1>
@@ -97,6 +89,7 @@ export default async function ProductDetailPage({
           {formatDateTime(product.created_at)} 등록
         </p>
       </div>
+      <BackToListButton href="/products" />
 
       <div className="space-y-4">
         <ProductReviewActions productId={product.id} status={product.status} />
