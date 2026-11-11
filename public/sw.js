@@ -9,12 +9,17 @@ self.addEventListener('push', (event) => {
     // 페이로드가 JSON이 아니어도 기본 알림은 표시한다.
   }
   event.waitUntil(
-    self.registration.showNotification(data.title || 'GospelFix', {
-      body: data.body || '',
-      icon: '/icons/icon-192.png',
-      badge: '/icons/icon-192.png',
-      data: { url: data.url || '/quotes' },
-    }),
+    self.registration
+      .showNotification(data.title || 'GospelFix', {
+        body: data.body || '',
+        icon: '/icons/icon-192.png',
+        badge: '/icons/icon-192.png',
+        data: { url: data.url || '/quotes' },
+      })
+      // 앱 아이콘 배지 = 아직 확인하지 않은(알림센터에 남은) 알림 수. 앱을 열면 클라이언트가 비운다.
+      .then(() => self.registration.getNotifications())
+      .then((list) => navigator.setAppBadge && navigator.setAppBadge(list.length))
+      .catch((error) => console.error('[push] 배지 갱신 실패', error)),
   );
 });
 

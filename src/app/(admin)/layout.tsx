@@ -1,4 +1,5 @@
 import { MobileMenuProvider } from '@/components/admin/MobileMenuContext';
+import AppBadgeClearer from '@/components/admin/AppBadgeClearer';
 import AdminShell from '@/components/admin/AdminShell';
 import Sidebar from '@/components/admin/Sidebar';
 import { requireAdminPage } from '@/libs/supabase/queries/auth';
@@ -12,6 +13,7 @@ export default async function AdminLayout({
 
   return (
     <MobileMenuProvider>
+      <AppBadgeClearer />
       <div className="min-h-screen bg-gray-100 dark:bg-gray-900">
         <AdminShell>
           <div className="flex gap-3 p-3 pt-[68px] lg:pt-3">
