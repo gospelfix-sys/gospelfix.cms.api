@@ -1,5 +1,6 @@
 'use client';
 
+import { formatDate } from '@/libs/format';
 import { GripVertical } from 'lucide-react';
 import { DndContext, closestCenter } from '@dnd-kit/core';
 import {
@@ -91,10 +92,7 @@ function PortfolioRow({
           )}
         </div>
         <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
-          {[
-            portfolio.category,
-            new Date(portfolio.created_at).toLocaleDateString('ko-KR'),
-          ]
+          {[portfolio.category, formatDate(portfolio.created_at)]
             .filter(Boolean)
             .join(' · ')}
         </p>

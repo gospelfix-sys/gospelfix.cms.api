@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 import { getQuoteByIdAdmin } from '@/libs/supabase/queries/quotes.admin';
 import { parseUserAgent, formatTrafficSource } from '@/libs/user-agent';
-import { formatPrice, isSafeHttpUrl } from '@/libs/format';
+import { formatPrice, isSafeHttpUrl, formatDateTime } from '@/libs/format';
 
 function Card({
   title,
@@ -69,16 +69,13 @@ export default async function QuoteDetailPage({
           {quote.contact_name}님의 견적 신청
         </h1>
         <p className="text-sm text-gray-400 mt-0.5">
-          {new Date(quote.created_at).toLocaleString('ko-KR')}
+          {formatDateTime(quote.created_at)}
         </p>
       </div>
 
       <div className="space-y-4">
         <Card title="방문 정보">
-          <Field
-            label="신청일시"
-            value={new Date(quote.created_at).toLocaleString('ko-KR')}
-          />
+          <Field label="신청일시" value={formatDateTime(quote.created_at)} />
           <Field
             label="로그인 여부"
             value={quote.is_authenticated ? '로그인 상태' : '비로그인'}

@@ -3,7 +3,7 @@
 import { useRouter } from 'next/navigation';
 import type { AdminQuoteListItem } from '@/types/quote';
 import { parseUserAgent, formatTrafficSource } from '@/libs/user-agent';
-import { formatPrice } from '@/libs/format';
+import { formatPrice, formatDateTime } from '@/libs/format';
 
 export default function QuotesTable({
   quotes,
@@ -65,7 +65,7 @@ export default function QuotesTable({
                   {formatTrafficSource(quote.referer, quote.utm_params)}
                 </td>
                 <td className="px-4 py-3 text-gray-400 whitespace-nowrap">
-                  {new Date(quote.created_at).toLocaleString('ko-KR')}
+                  {formatDateTime(quote.created_at)}
                 </td>
               </tr>
             );

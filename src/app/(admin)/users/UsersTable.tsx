@@ -1,5 +1,6 @@
 'use client';
 
+import { formatDate } from '@/libs/format';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import * as PopoverPrimitive from '@radix-ui/react-popover';
@@ -67,14 +68,11 @@ function UserRow({
         <p className="text-xs text-gray-400 dark:text-gray-500 truncate">
           {formatPhone(user.phone)}
           &nbsp;&nbsp;
-          {new Date(user.created_at).toLocaleDateString('ko-KR')} 가입
+          {formatDate(user.created_at)} 가입
           {user.role === 'user' && user.seller_requested_at && (
             <>
               &nbsp;&nbsp;
-              {new Date(user.seller_requested_at).toLocaleDateString(
-                'ko-KR',
-              )}{' '}
-              판매자 신청
+              {formatDate(user.seller_requested_at)} 판매자 신청
             </>
           )}
         </p>

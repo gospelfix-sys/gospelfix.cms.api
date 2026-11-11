@@ -1,5 +1,6 @@
 'use client';
 
+import { formatDate } from '@/libs/format';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Check } from 'lucide-react';
@@ -140,12 +141,10 @@ export default function OrdersTable({
                 </div>
               </td>
               <td className="px-4 py-3 text-gray-400 hidden sm:table-cell">
-                {order.paid_at
-                  ? new Date(order.paid_at).toLocaleDateString('ko-KR')
-                  : '-'}
+                {order.paid_at ? formatDate(order.paid_at) : '-'}
               </td>
               <td className="px-4 py-3 text-gray-400 hidden sm:table-cell">
-                {new Date(order.created_at).toLocaleDateString('ko-KR')}
+                {formatDate(order.created_at)}
               </td>
             </tr>
           ))}

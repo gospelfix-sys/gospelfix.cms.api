@@ -1,5 +1,6 @@
 'use client';
 
+import { formatDate } from '@/libs/format';
 import { GripVertical } from 'lucide-react';
 import { DndContext, closestCenter } from '@dnd-kit/core';
 import {
@@ -91,7 +92,7 @@ function CategoryRow({
             {category.is_active ? '활성' : '비활성'}
           </span>
           <span className="text-xs text-gray-400 dark:text-gray-500 whitespace-nowrap">
-            {new Date(category.created_at).toLocaleDateString('ko-KR')}
+            {formatDate(category.created_at)}
           </span>
         </div>
       </div>

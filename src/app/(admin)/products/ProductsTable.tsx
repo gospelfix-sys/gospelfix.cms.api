@@ -21,7 +21,7 @@ import { useAdminRowActions } from '@/hooks/useAdminRowActions';
 import RowActionMenu from '@/components/admin/shared/RowActionMenu';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { AlertDialog } from '@/components/ui/alert-dialog';
-import { formatPrice } from '@/libs/format';
+import { formatPrice, formatDate } from '@/libs/format';
 import type { Product } from '@/types/product';
 
 const STATUS_CLASS: Record<string, string> = {
@@ -146,7 +146,7 @@ function ProductRow({
             </span>
           )}
           <span className="text-xs text-gray-400 dark:text-gray-500 whitespace-nowrap">
-            {new Date(product.created_at).toLocaleDateString('ko-KR')}
+            {formatDate(product.created_at)}
           </span>
         </div>
 

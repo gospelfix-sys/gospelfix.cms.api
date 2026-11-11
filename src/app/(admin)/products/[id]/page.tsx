@@ -5,7 +5,7 @@ import { getProductByIdAdmin } from '@/libs/supabase/queries/products.admin';
 import { getProfileById } from '@/libs/supabase/queries/account';
 import { getProductCategoryLabelMap } from '@/libs/supabase/queries/product-categories.admin';
 import { getProductSubCategoryLabelMap } from '@/libs/supabase/queries/product-sub-categories.admin';
-import { formatPrice, isSafeHttpUrl } from '@/libs/format';
+import { formatPrice, isSafeHttpUrl, formatDateTime } from '@/libs/format';
 import ProductReviewActions from './ProductReviewActions';
 import type { Product } from '@/types/product';
 
@@ -94,7 +94,7 @@ export default async function ProductDetailPage({
           {product.name}
         </h1>
         <p className="text-sm text-gray-400 mt-0.5">
-          {new Date(product.created_at).toLocaleString('ko-KR')} 등록
+          {formatDateTime(product.created_at)} 등록
         </p>
       </div>
 
@@ -106,7 +106,11 @@ export default async function ProductDetailPage({
           <Field label="슬러그" value={product.slug} mono />
           <Field
             label="카테고리"
-            value={product.category ? (categoryLabels[product.category] ?? product.category) : null}
+            value={
+              product.category
+                ? (categoryLabels[product.category] ?? product.category)
+                : null
+            }
           />
           <Field
             label="소분류"
@@ -121,7 +125,7 @@ export default async function ProductDetailPage({
           {hasDiscountPeriod && (
             <Field
               label="할인 기간"
-              value={`${product.discount_starts_at ? new Date(product.discount_starts_at).toLocaleString('ko-KR') : '-'} ~ ${product.discount_ends_at ? new Date(product.discount_ends_at).toLocaleString('ko-KR') : '-'}`}
+              value={`${product.discount_starts_at ? formatDateTime(product.discount_starts_at) : '-'} ~ ${product.discount_ends_at ? formatDateTime(product.discount_ends_at) : '-'}`}
             />
           )}
         </Card>
@@ -137,14 +141,8 @@ export default async function ProductDetailPage({
             label="좋아요 수"
             value={product.like_count.toLocaleString('ko-KR')}
           />
-          <Field
-            label="등록일"
-            value={new Date(product.created_at).toLocaleString('ko-KR')}
-          />
-          <Field
-            label="수정일"
-            value={new Date(product.updated_at).toLocaleString('ko-KR')}
-          />
+          <Field label="등록일" value={formatDateTime(product.created_at)} />
+          <Field label="수정일" value={formatDateTime(product.updated_at)} />
         </Card>
 
         <Card title="상세 콘텐츠">
