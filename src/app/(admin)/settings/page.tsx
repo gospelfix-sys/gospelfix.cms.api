@@ -1,4 +1,5 @@
 import SettingsClientSection from './SettingsClientSection';
+import PushToggleCard from './PushToggleCard';
 import ApiSettingsSection from './ApiSettingsSection';
 import AuthApiSettingsSection from './AuthApiSettingsSection';
 
@@ -21,6 +22,7 @@ export default function SettingsPage({ searchParams }: SettingsPageProps) {
       </div>
       <div className="flex flex-col gap-4">
         <SettingsClientSection />
+        <PushToggleCard />
         <AuthApiSettingsSection />
         <ApiSettingsSection page={page} />
       </div>
