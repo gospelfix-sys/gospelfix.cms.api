@@ -7,7 +7,7 @@ async function clearBadge() {
   if (document.visibilityState !== 'visible') return;
   try {
     await navigator.clearAppBadge?.();
-    const reg = await navigator.serviceWorker?.getRegistration('/sw.js');
+    const reg = await navigator.serviceWorker?.getRegistration();
     (await reg?.getNotifications())?.forEach((n) => n.close());
   } catch (error) {
     console.error('[push] 배지 초기화 실패', error);

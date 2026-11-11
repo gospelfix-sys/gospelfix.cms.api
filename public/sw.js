@@ -17,8 +17,13 @@ self.addEventListener('push', (event) => {
         data: { url: data.url || '/quotes' },
       })
       // 앱 아이콘 배지 = 아직 확인하지 않은(알림센터에 남은) 알림 수. 앱을 열면 클라이언트가 비운다.
-      .then(() => self.registration.getNotifications())
-      .then((list) => navigator.setAppBadge && navigator.setAppBadge(list.length))
+      .then(async () => {
+        // 앱을 보고 있는 중이면 이미 확인한 것이므로 배지를 올리지 않는다.
+        const clients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+        if (clients.some((c) => c.visibilityState === 'visible')) return;
+        const list = await self.registration.getNotifications();
+        return navigator.setAppBadge?.(list.length);
+      })
       .catch((error) => console.error('[push] 배지 갱신 실패', error)),
   );
 });
