@@ -1,4 +1,5 @@
 import { createAdminClient } from '@/libs/supabase/admin';
+import { sendPushToAdmins } from '@/libs/push';
 
 export interface QuoteSelectedItem {
   id: string;
@@ -69,5 +70,21 @@ export async function submitQuote(input: SubmitQuoteInput): Promise<string> {
   });
 
   if (error) throw new Error(error.message);
+
+  // 푸시 실패가 견적 저장을 실패로 만들면 안 된다. 서버리스는 응답 후 실행이 끊기므로 await한다.
+  try {
+    const total =
+      input.estimatedTotal != null
+        ? ` · 예상 ${input.estimatedTotal.toLocaleString('ko-KR')}원`
+        : '';
+    await sendPushToAdmins({
+      title: '새 견적 신청',
+      body: `${input.contactName}${total}`,
+      url: `/quotes/${id}`,
+    });
+  } catch (pushError) {
+    console.error('[quotes] 푸시 알림 실패', pushError);
+  }
+
   return id;
 }
