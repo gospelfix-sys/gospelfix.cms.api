@@ -9,6 +9,9 @@ import { Toaster } from '@/components/ui/sonner';
 export const metadata: Metadata = {
   title: 'GospelFix Admin',
   description: 'GospelFix 관리자 페이지',
+  manifest: '/manifest.webmanifest',
+  icons: { apple: '/icons/apple-touch-icon.png' },
+  appleWebApp: { capable: true, title: 'GF Admin', statusBarStyle: 'default' },
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
