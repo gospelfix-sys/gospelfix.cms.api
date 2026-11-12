@@ -808,7 +808,7 @@ create table public.gospelfix_news (
   -- insert하므로 지금까지 드러나지 않음). 운영 DB 상태를 있는 그대로 재현한다.
   category         text not null default '업데이트'
                      constraint news_category_check
-                     check (category in ('신규 템플릿', '이벤트', 'AI 활용', 'UX/UI 디자인')),
+                     check (category in ('신규 템플릿', '이벤트', 'AI 활용', 'UX/UI 디자인', '꿀팁')),
   thumbnail_url    text,
   portfolio_images text[] not null default '{}',
   is_published     boolean not null default false,
