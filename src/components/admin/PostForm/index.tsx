@@ -23,6 +23,7 @@ const CATEGORY_OPTIONS: PostCategory[] = [
   '이벤트',
   'AI 활용',
   'UX/UI 디자인',
+  '꿀팁',
 ];
 const DEFAULT_CATEGORY: PostCategory = '신규 템플릿';
 

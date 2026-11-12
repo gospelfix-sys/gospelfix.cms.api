@@ -2,7 +2,7 @@ export type PostStatus = 'draft' | 'published';
 
 // 실제 운영 news 테이블의 category CHECK 제약과 동일한 고정값
 export type PostCategory =
-  '신규 템플릿' | '이벤트' | 'AI 활용' | 'UX/UI 디자인';
+  '신규 템플릿' | '이벤트' | 'AI 활용' | 'UX/UI 디자인' | '꿀팁';
 
 export interface Post {
   id: string;

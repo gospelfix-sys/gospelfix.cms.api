@@ -19,7 +19,7 @@ export const BlogPostSchema = z
       .nullable()
       .openapi({ example: '<p>본문 내용입니다.</p>' }),
     category: z
-      .enum(['신규 템플릿', '이벤트', 'AI 활용', 'UX/UI 디자인'])
+      .enum(['신규 템플릿', '이벤트', 'AI 활용', 'UX/UI 디자인', '꿀팁'])
       .nullable()
       .openapi({ example: '신규 템플릿' }),
     portfolio_images: z.array(z.string()).openapi({

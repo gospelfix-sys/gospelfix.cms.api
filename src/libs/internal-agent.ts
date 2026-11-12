@@ -9,6 +9,7 @@ export const VALID_CATEGORIES: PostCategory[] = [
   '이벤트',
   'AI 활용',
   'UX/UI 디자인',
+  '꿀팁',
 ];
 
 // RichEditor 툴바가 실제로 노출하는 서식(TipTap 기본 스키마의 부분집합)만 허용 — codeBlock/br 등은 의도적으로 제외
