@@ -54,24 +54,22 @@ export default function Sidebar() {
   return (
     <aside
       className={`
-        fixed inset-y-0 right-0 z-50 w-[260px]
+        fixed inset-0 z-50 w-full
         lg:relative lg:inset-auto lg:z-auto lg:sticky lg:top-3 lg:w-[220px] lg:h-[calc(100vh-1.5rem)]
-        bg-white dark:bg-gray-800 shadow-sm flex flex-col p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] lg:pb-4
-        rounded-l-2xl lg:rounded-2xl
+        bg-white dark:bg-gray-800 shadow-sm flex flex-col p-4 pt-[calc(1rem+env(safe-area-inset-top))] pb-[calc(1rem+env(safe-area-inset-bottom))] lg:pt-4 lg:pb-4
+        lg:rounded-2xl
         transition-transform duration-300 ease-in-out
         ${isOpen ? 'translate-x-0' : 'translate-x-full lg:translate-x-0'}
       `}
     >
-      {/* 모바일 전용 닫기 버튼 */}
-      <div className="flex justify-end mb-3 lg:hidden">
-        <button
-          onClick={close}
-          className="p-1.5 rounded-lg text-gray-400 dark:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-          aria-label="메뉴 닫기"
-        >
-          <X size={18} />
-        </button>
-      </div>
+      {/* 모바일 전용 닫기 버튼: 메뉴 위에 떠 있는 플로팅 버튼 */}
+      <button
+        onClick={close}
+        className="absolute right-4 top-[calc(1rem+env(safe-area-inset-top))] z-10 flex h-11 w-11 items-center justify-center rounded-lg bg-white dark:bg-gray-700 text-gray-500 dark:text-gray-300 shadow-lg ring-1 ring-black/5 dark:ring-white/10 active:scale-95 transition lg:hidden"
+        aria-label="메뉴 닫기"
+      >
+        <X size={20} />
+      </button>
 
       {/* 네비게이션 */}
       <nav className="flex flex-col gap-1 flex-1">
