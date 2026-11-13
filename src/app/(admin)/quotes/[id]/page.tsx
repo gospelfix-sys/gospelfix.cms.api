@@ -65,7 +65,7 @@ export default async function QuoteDetailPage({
           {formatDateTime(quote.created_at)}
         </p>
       </div>
-      <BackToListButton href="/quotes" />
+      <BackToListButton href="/quotes" position="top" />
       <MarkQuoteViewed id={quote.id} viewed={!!quote.viewed_at} />
 
       <div className="space-y-4">
