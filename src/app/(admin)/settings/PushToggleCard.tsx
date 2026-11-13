@@ -2,13 +2,12 @@
 
 import { useEffect, useState, useTransition } from 'react';
 import { toast } from 'sonner';
-import { subscribePushAction, unsubscribePushAction } from './actions';
-
-function urlBase64ToUint8Array(base64: string): Uint8Array {
-  const padded = base64 + '='.repeat((4 - (base64.length % 4)) % 4);
-  const raw = atob(padded.replace(/-/g, '+').replace(/_/g, '/'));
-  return Uint8Array.from(raw, (c) => c.charCodeAt(0));
-}
+import {
+  isPushOptedOut,
+  setPushOptedOut,
+  subscribeAndSave,
+} from '@/libs/push-client';
+import { unsubscribePushAction } from './actions';
 
 export default function PushToggleCard() {
   const [supported, setSupported] = useState(true);
@@ -22,9 +21,19 @@ export default function PushToggleCard() {
     }
     navigator.serviceWorker
       .register('/sw.js')
-      .then((reg) => reg.pushManager.getSubscription())
-      .then((sub) => setEnabled(sub !== null))
-      .catch((error) => console.error('[push] 서비스워커 등록 실패', error));
+      .then(async (reg) => {
+        const sub = await reg.pushManager.getSubscription();
+        if (sub) {
+          setEnabled(true);
+          return;
+        }
+        // 권한이 이미 허용된 기기는 팝업 없이 기본값 켜짐으로 구독한다.
+        if (Notification.permission === 'granted' && !isPushOptedOut()) {
+          await subscribeAndSave(reg);
+          setEnabled(true);
+        }
+      })
+      .catch((error) => console.error('[push] 서비스워커 등록/자동 구독 실패', error));
   }, []);
 
   const enable = async () => {
@@ -33,29 +42,9 @@ export default function PushToggleCard() {
       toast.error('알림 권한이 허용되지 않았어요.');
       return;
     }
-    const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
-    if (!vapidPublicKey) {
-      throw new Error('NEXT_PUBLIC_VAPID_PUBLIC_KEY가 설정되지 않았습니다.');
-    }
     const reg = await navigator.serviceWorker.ready;
-    const sub = await reg.pushManager.subscribe({
-      userVisibleOnly: true,
-      applicationServerKey: urlBase64ToUint8Array(vapidPublicKey) as BufferSource,
-    });
-    const keys = sub.toJSON().keys;
-    try {
-      if (!keys?.p256dh || !keys.auth) {
-        throw new Error('구독 키를 가져오지 못했습니다.');
-      }
-      await subscribePushAction(
-        { endpoint: sub.endpoint, p256dh: keys.p256dh, auth: keys.auth },
-        navigator.userAgent,
-      );
-    } catch (error) {
-      // 서버 저장에 실패하면 브라우저에만 남는 고아 구독을 정리한다.
-      await sub.unsubscribe();
-      throw error;
-    }
+    await subscribeAndSave(reg);
+    setPushOptedOut(false);
     setEnabled(true);
     toast.success('이 기기로 새 견적 알림을 받아요.');
   };
@@ -67,6 +56,7 @@ export default function PushToggleCard() {
       await unsubscribePushAction(sub.endpoint);
       await sub.unsubscribe();
     }
+    setPushOptedOut(true);
     setEnabled(false);
     toast.success('알림을 껐어요.');
   };
