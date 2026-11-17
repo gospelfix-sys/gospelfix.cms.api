@@ -268,6 +268,26 @@ export async function approveProduct(id: string): Promise<Product> {
   return data as unknown as Product;
 }
 
+// 판매자 상품은 판매자가 등록 화면에서 정하지만, 판매자 없는 공식 상품이나 사후 조정은 관리자가 바꾼다.
+export async function setProductAllowCoupon(
+  id: string,
+  allowCoupon: boolean,
+): Promise<Product> {
+  assertValidUUID(id);
+  const supabase = createAdminClient();
+  const { data, error } = await supabase
+    .from('moda_products')
+    .update({ allow_coupon: allowCoupon })
+    .eq('id', id)
+    .select(ADMIN_SELECT_COLUMNS)
+    .single();
+  if (error) {
+    console.error('[setProductAllowCoupon]', error);
+    throw new Error('쿠폰 적용 설정 변경에 실패했습니다.');
+  }
+  return data as unknown as Product;
+}
+
 export async function rejectProduct(id: string): Promise<Product> {
   assertValidUUID(id);
   const supabase = createAdminClient();

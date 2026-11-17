@@ -6,6 +6,7 @@ import {
   updateProductsSortOrder,
   approveProduct,
   rejectProduct,
+  setProductAllowCoupon,
 } from '@/libs/supabase/queries/products.admin';
 import { requireAdminPage } from '@/libs/supabase/queries/auth';
 import type { Product } from '@/types/product';
@@ -31,6 +32,14 @@ export async function approveProductAction(id: string): Promise<Product> {
 export async function rejectProductAction(id: string): Promise<Product> {
   await requireAdminPage();
   return rejectProduct(id);
+}
+
+export async function setProductAllowCouponAction(
+  id: string,
+  allowCoupon: boolean,
+): Promise<Product> {
+  await requireAdminPage();
+  return setProductAllowCoupon(id, allowCoupon);
 }
 
 export async function updateProductsSortOrderAction(

@@ -6,6 +6,7 @@ import { getProductCategoryLabelMap } from '@/libs/supabase/queries/product-cate
 import { getProductSubCategoryLabelMap } from '@/libs/supabase/queries/product-sub-categories.admin';
 import { formatPrice, isSafeHttpUrl, formatDateTime } from '@/libs/format';
 import ProductReviewActions from './ProductReviewActions';
+import ProductCouponToggle from './ProductCouponToggle';
 import type { Product } from '@/types/product';
 
 const STATUS_LABEL: Record<Product['status'], string> = {
@@ -268,6 +269,11 @@ export default async function ProductDetailPage({
           <Field
             label="AI 스타터킷 포함"
             value={product.has_ai_starter_kit ? '포함' : '미포함'}
+          />
+          <ProductCouponToggle
+            productId={product.id}
+            allowCoupon={product.allow_coupon}
+            isFree={product.price === 0}
           />
         </Card>
       </div>

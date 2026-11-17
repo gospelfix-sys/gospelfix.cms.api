@@ -306,7 +306,8 @@ export function registerOrderPaths(reg: OpenAPIRegistry) {
       },
       400: {
         description:
-          '필수 파라미터 누락, 결제 금액 불일치 또는 청약철회 안내 미동의',
+          '필수 파라미터 누락, 결제 금액 불일치, 청약철회 안내 미동의, ' +
+          '유효하지 않은 쿠폰, 또는 판매자가 쿠폰 적용을 허용하지 않은 상품(allow_coupon=false)에 couponCode를 보낸 경우',
         content: {
           'application/json': { schema: z.object({ error: z.string() }) },
         },
