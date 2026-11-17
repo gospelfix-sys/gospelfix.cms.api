@@ -78,6 +78,13 @@ export async function POST(request: NextRequest) {
     let couponId: string | null = null;
     let discountAmount = 0;
     if (couponCode && basePrice > 0) {
+      // 판매자가 쿠폰 적용을 허용한 상품만 쿠폰을 쓸 수 있다(화면에서 숨겨도 서버가 막아야 우회되지 않음)
+      if (!product.allow_coupon) {
+        return NextResponse.json(
+          { error: '이 상품에는 쿠폰을 사용할 수 없습니다.' },
+          { status: 400 },
+        );
+      }
       const coupon = await validateCouponForOrder(user.id, couponCode);
       if (!coupon) {
         return NextResponse.json({ error: '유효하지 않은 쿠폰입니다.' }, { status: 400 });

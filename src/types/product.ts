@@ -60,13 +60,22 @@ export interface Product {
   // true면 상세페이지에 "AI 확장" 칩이 노출되고, 프론트가 범용 .claude/ 스타터 킷 다운로드
   // 링크를 함께 보여준다. 템플릿별 맞춤 파일이 아니라 모든 상품이 공유하는 정적 자산이다.
   has_ai_starter_kit: boolean;
+  // 판매자가 등록 시 켠 상품에만 구매자 보유 쿠폰(가입 쿠폰 등)을 적용할 수 있다.
+  // 기본 false — 주문 생성(/api/v1/orders)이 서버에서 강제한다. 005_add_products_allow_coupon
+  allow_coupon: boolean;
   // 구매 후 다운로드용 zip 파일의 Storage 객체 경로(private 버킷 product-files 기준).
   // 절대 공개 상품 API에 노출하지 말 것 — 구매 인증을 거친 엔드포인트에서만 조회
   file_path: string | null;
   // 상품 상세페이지 "코드 미리보기" 섹션 탭 배열 (비어있으면 섹션 자체를 숨김)
   code_preview: ProductCodePreviewItem[] | null;
-  // 저작권 및 라이선스 구분. DB CHECK 제약으로 4개 값만 허용(002_add_products_license)
-  license: 'cc-by' | 'cc-by-nc' | 'cc-by-nc-nd' | 'all-rights-reserved';
+  // 저작권 및 라이선스 구분. DB CHECK 제약으로 5개 값만 허용(002_add_products_license,
+  // service-delivery는 004_add_service_delivery_license에서 추가)
+  license:
+    | 'cc-by'
+    | 'cc-by-nc'
+    | 'cc-by-nc-nd'
+    | 'all-rights-reserved'
+    | 'service-delivery';
   // 미술·전시 분야 상세(업로드 폼 "미술·전시" 탭). 전부 선택 입력이며 빈 값은 NULL/false로 저장
   artwork_size: string | null;
   artwork_medium: string | null;
@@ -117,9 +126,12 @@ export interface MyProductInput {
   productCode: string;
   designType: string;
   hasAiStarterKit: boolean;
+  // 구버전 클라이언트가 키를 빼고 보내도 저장이 거부되지 않게 선택값으로 둔다.
+  // 없으면 기존 값을 유지한다(생성 시에는 DB 기본값 false)
+  allowCoupon?: boolean;
   filePath: string | null;
   codePreview: ProductCodePreviewItem[];
-  license: 'cc-by' | 'cc-by-nc' | 'cc-by-nc-nd' | 'all-rights-reserved';
+  license: Product['license'];
   artworkSize: string;
   artworkMedium: string;
   artworkYear: string;

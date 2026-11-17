@@ -162,6 +162,12 @@ export const ProductSchema = z
         'true면 상세페이지에 "AI 확장" 칩과 .claude 스타터 킷 다운로드 링크가 노출된다. ' +
         '템플릿별 맞춤 파일이 아니라 모든 상품이 공유하는 정적 자산이다.',
     }),
+    allow_coupon: z.boolean().openapi({
+      example: false,
+      description:
+        '판매자가 쿠폰 적용을 허용한 상품인지 여부(기본 false). false면 구매자가 쿠폰을 보유해도 ' +
+        '이 상품 주문에는 쓸 수 없고, 주문 생성 시 서버가 거부한다.',
+    }),
     code_preview: z
       .array(ProductCodePreviewItemSchema)
       .nullable()
@@ -182,12 +188,19 @@ export const ProductSchema = z
         ],
       }),
     license: z
-      .enum(['cc-by', 'cc-by-nc', 'cc-by-nc-nd', 'all-rights-reserved'])
+      .enum([
+        'cc-by',
+        'cc-by-nc',
+        'cc-by-nc-nd',
+        'all-rights-reserved',
+        'service-delivery',
+      ])
       .openapi({
         example: 'all-rights-reserved',
         description:
           '저작권 및 라이선스. cc-by(저작권표시) / cc-by-nc(저작권표시-비영리) / ' +
-          'cc-by-nc-nd(저작권표시-비영리-변경금지) / all-rights-reserved(판권소유, 기본값)',
+          'cc-by-nc-nd(저작권표시-비영리-변경금지) / all-rights-reserved(판권소유, 기본값) / ' +
+          'service-delivery(제작·납품 서비스 — 파일 판매가 아닌 용역 상품)',
       }),
     created_at: z
       .string()

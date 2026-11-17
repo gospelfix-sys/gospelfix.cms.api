@@ -25,7 +25,7 @@ export class MyProductError extends Error {
 // status로 별칭 처리한다 — status(단수)는 001부터 있던 무관한 레거시 컬럼이라 충돌 방지
 // (056_fix_products_status_column_collision 참고).
 const MY_SELECT_COLUMNS =
-  'id,slug,name,description,content_html,discount_starts_at,discount_ends_at,category,sub_categories,price,thumbnail_url,images,demo_url,is_active,sort_order,supply_price,purchase_options:options,production_solution,product_code,design_type,like_count,has_ai_starter_kit,file_path,code_preview,license,artwork_size,artwork_medium,artwork_year,exhibition_title,exhibition_period,exhibition_venue,exhibition_artists,edition_type,edition_size,frame_included,created_at,updated_at,seller_id,status:review_status';
+  'id,slug,name,description,content_html,discount_starts_at,discount_ends_at,category,sub_categories,price,thumbnail_url,images,demo_url,is_active,sort_order,supply_price,purchase_options:options,production_solution,product_code,design_type,like_count,has_ai_starter_kit,allow_coupon,file_path,code_preview,license,artwork_size,artwork_medium,artwork_year,exhibition_title,exhibition_period,exhibition_venue,exhibition_artists,edition_type,edition_size,frame_included,created_at,updated_at,seller_id,status:review_status';
 
 // 서비스 롤 클라이언트로 쓰되, 모든 쿼리에 seller_id 조건을 강제해 애플리케이션 계층에서
 // 소유권을 검증한다(RLS를 seller까지 확장하는 대신 택한 방식 —
@@ -74,6 +74,8 @@ async function toPayload(input: MyProductInput, sellerId: string) {
     product_code: input.productCode || null,
     design_type: input.designType || null,
     has_ai_starter_kit: input.hasAiStarterKit,
+    // 키를 빼고 보낸 요청이 기존 값을 false로 덮어쓰지 않게 값이 있을 때만 넣는다
+    ...(input.allowCoupon !== undefined && { allow_coupon: input.allowCoupon }),
     file_path: input.filePath,
     code_preview: sanitizeCodePreview(input.codePreview),
     license: input.license,
@@ -130,6 +132,7 @@ export function toApiProduct(product: Product) {
     productCode: product.product_code,
     designType: product.design_type,
     hasAiStarterKit: product.has_ai_starter_kit,
+    allowCoupon: product.allow_coupon,
     filePath: product.file_path,
     codePreview: product.code_preview,
     license: product.license,
@@ -156,12 +159,14 @@ export function toApiProduct(product: Product) {
 // 기준은 recorded_at(서버 기록 시각)이고 client_agreed_at은 클라이언트가 보낸 참고값이다.
 // 입력이 없으면 아무것도 하지 않아 기존 이력이 보존된다. 모달을 거치지 않은 저장(예: 이미
 // 동의한 라이선스 그대로 수정)은 키 자체가 오지 않는다.
-const LICENSE_VALUES = [
+// DB CHECK 제약(moda_products_license_check, 004_add_service_delivery_license)과 같은 목록.
+const LICENSE_VALUES: readonly Product['license'][] = [
   'cc-by',
   'cc-by-nc',
   'cc-by-nc-nd',
   'all-rights-reserved',
-] as const;
+  'service-delivery',
+];
 
 async function recordLicenseAgreement(
   sellerId: string,

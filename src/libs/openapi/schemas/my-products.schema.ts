@@ -26,12 +26,19 @@ const CodePreviewItemSchema = z.object({
 });
 
 const LicenseSchema = z
-  .enum(['cc-by', 'cc-by-nc', 'cc-by-nc-nd', 'all-rights-reserved'])
+  .enum([
+    'cc-by',
+    'cc-by-nc',
+    'cc-by-nc-nd',
+    'all-rights-reserved',
+    'service-delivery',
+  ])
   .openapi({
     example: 'all-rights-reserved',
     description:
       '저작권 및 라이선스. cc-by(저작권표시) / cc-by-nc(저작권표시-비영리) / ' +
-      'cc-by-nc-nd(저작권표시-비영리-변경금지) / all-rights-reserved(판권소유, 기본값)',
+      'cc-by-nc-nd(저작권표시-비영리-변경금지) / all-rights-reserved(판권소유, 기본값) / ' +
+      'service-delivery(제작·납품 서비스 — 파일 판매가 아닌 용역 상품)',
   });
 
 export const MyProductSchema = z
@@ -60,6 +67,7 @@ export const MyProductSchema = z
     productCode: z.string().nullable(),
     designType: z.string().nullable(),
     hasAiStarterKit: z.boolean(),
+    allowCoupon: z.boolean(),
     filePath: z.string().nullable(),
     codePreview: z.array(CodePreviewItemSchema).nullable(),
     license: LicenseSchema,
@@ -109,6 +117,8 @@ const MyProductInputSchema = z
     productCode: z.string(),
     designType: z.string(),
     hasAiStarterKit: z.boolean(),
+    // 생략하면 기존 값을 유지한다(생성 시 기본 false)
+    allowCoupon: z.boolean().optional(),
     filePath: z.string().nullable(),
     codePreview: z.array(CodePreviewItemSchema),
     license: LicenseSchema,

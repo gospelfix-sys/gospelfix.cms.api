@@ -60,7 +60,7 @@ export function sanitizeProductContentHtml(content: string): string {
 // 무관한 레거시 컬럼이라 충돌을 피해 DB 컬럼명은 review_status를 쓰되 앱 필드명은
 // status로 별칭 처리한다(056_fix_products_status_column_collision 메모리 참고).
 const ADMIN_SELECT_COLUMNS =
-  'id,slug,name,description,content_html,discount_starts_at,discount_ends_at,category,sub_categories,price,thumbnail_url,images,demo_url,is_active,sort_order,supply_price,purchase_options:options,production_solution,product_code,design_type,like_count,has_ai_starter_kit,file_path,code_preview,license,created_at,updated_at,seller_id,status:review_status';
+  'id,slug,name,description,content_html,discount_starts_at,discount_ends_at,category,sub_categories,price,thumbnail_url,images,demo_url,is_active,sort_order,supply_price,purchase_options:options,production_solution,product_code,design_type,like_count,has_ai_starter_kit,allow_coupon,file_path,code_preview,license,created_at,updated_at,seller_id,status:review_status';
 
 export function assertValidUUID(id: string): void {
   if (!id || !UUID_REGEX.test(id))
@@ -227,6 +227,7 @@ export async function duplicateProduct(id: string): Promise<Product> {
       product_code: null,
       design_type: original.design_type,
       has_ai_starter_kit: original.has_ai_starter_kit,
+      allow_coupon: original.allow_coupon,
       // 다운로드 파일도 복사하지 않는다 — 원본 zip이 나중에 교체/삭제되면 복제 상품까지
       // 함께 깨지는 걸 막기 위해 관리자가 복사본에 새로 업로드하도록 한다
       file_path: null,
