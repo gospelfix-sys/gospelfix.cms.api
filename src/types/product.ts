@@ -67,6 +67,17 @@ export interface Product {
   code_preview: ProductCodePreviewItem[] | null;
   // 저작권 및 라이선스 구분. DB CHECK 제약으로 4개 값만 허용(002_add_products_license)
   license: 'cc-by' | 'cc-by-nc' | 'cc-by-nc-nd' | 'all-rights-reserved';
+  // 미술·전시 분야 상세(업로드 폼 "미술·전시" 탭). 전부 선택 입력이며 빈 값은 NULL/false로 저장
+  artwork_size: string | null;
+  artwork_medium: string | null;
+  artwork_year: string | null;
+  exhibition_title: string | null;
+  exhibition_period: string | null;
+  exhibition_venue: string | null;
+  exhibition_artists: string | null;
+  edition_type: string | null;
+  edition_size: string | null;
+  frame_included: boolean;
   created_at: string;
   updated_at: string;
   // 이 상품을 등록한 판매자(profiles.id). NULL이면 GospelFix 공식 소유(기존 admin
@@ -109,4 +120,21 @@ export interface MyProductInput {
   filePath: string | null;
   codePreview: ProductCodePreviewItem[];
   license: 'cc-by' | 'cc-by-nc' | 'cc-by-nc-nd' | 'all-rights-reserved';
+  artworkSize: string;
+  artworkMedium: string;
+  artworkYear: string;
+  exhibitionTitle: string;
+  exhibitionPeriod: string;
+  exhibitionVenue: string;
+  exhibitionArtists: string;
+  editionType: string;
+  editionSize: string;
+  frameIncluded: boolean;
+  // 라이선스 모달의 필수 확인 항목 동의 기록. 모달에서 새로 동의한 저장에만 실리며, 키가
+  // 없으면 기존 동의 이력을 그대로 둔다(PATCH에서 없다고 지우지 않는다).
+  licenseAcknowledgement?: {
+    license: MyProductInput['license'];
+    version: string;
+    agreedAt: string;
+  };
 }

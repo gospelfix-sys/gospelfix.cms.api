@@ -63,6 +63,16 @@ export const MyProductSchema = z
     filePath: z.string().nullable(),
     codePreview: z.array(CodePreviewItemSchema).nullable(),
     license: LicenseSchema,
+    artworkSize: z.string().nullable(),
+    artworkMedium: z.string().nullable(),
+    artworkYear: z.string().nullable(),
+    exhibitionTitle: z.string().nullable(),
+    exhibitionPeriod: z.string().nullable(),
+    exhibitionVenue: z.string().nullable(),
+    exhibitionArtists: z.string().nullable(),
+    editionType: z.string().nullable(),
+    editionSize: z.string().nullable(),
+    frameIncluded: z.boolean(),
     status: z.enum(['draft', 'pending', 'approved', 'rejected']),
     sellerId: z.string().uuid().nullable(),
     isActive: z.boolean(),
@@ -102,6 +112,29 @@ const MyProductInputSchema = z
     filePath: z.string().nullable(),
     codePreview: z.array(CodePreviewItemSchema),
     license: LicenseSchema,
+    // 미술·전시 탭 — 미입력은 빈 문자열/false. 길이 상한은 DB 오남용 방지용
+    artworkSize: z.string().max(100),
+    artworkMedium: z.string().max(100),
+    artworkYear: z.string().max(20),
+    exhibitionTitle: z.string().max(200),
+    exhibitionPeriod: z.string().max(100),
+    exhibitionVenue: z.string().max(200),
+    exhibitionArtists: z.string().max(300),
+    editionType: z.string().max(40),
+    editionSize: z.string().max(100),
+    frameIncluded: z.boolean(),
+    licenseAcknowledgement: z
+      .object({
+        license: LicenseSchema,
+        version: z.string().openapi({ example: '2026-11-17' }),
+        agreedAt: z.string().datetime(),
+      })
+      .optional()
+      .openapi({
+        description:
+          '라이선스 확인 항목 동의 기록. 새로 동의한 저장에만 보낸다. license는 본문 license와 같아야 하며, ' +
+          '서버가 moda_product_license_agreements에 이력으로 쌓는다(키가 없으면 기존 이력 유지).',
+      }),
   })
   .openapi('MyProductInput');
 

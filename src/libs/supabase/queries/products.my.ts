@@ -25,7 +25,7 @@ export class MyProductError extends Error {
 // status로 별칭 처리한다 — status(단수)는 001부터 있던 무관한 레거시 컬럼이라 충돌 방지
 // (056_fix_products_status_column_collision 참고).
 const MY_SELECT_COLUMNS =
-  'id,slug,name,description,content_html,discount_starts_at,discount_ends_at,category,sub_categories,price,thumbnail_url,images,demo_url,is_active,sort_order,supply_price,purchase_options:options,production_solution,product_code,design_type,like_count,has_ai_starter_kit,file_path,code_preview,license,created_at,updated_at,seller_id,status:review_status';
+  'id,slug,name,description,content_html,discount_starts_at,discount_ends_at,category,sub_categories,price,thumbnail_url,images,demo_url,is_active,sort_order,supply_price,purchase_options:options,production_solution,product_code,design_type,like_count,has_ai_starter_kit,file_path,code_preview,license,artwork_size,artwork_medium,artwork_year,exhibition_title,exhibition_period,exhibition_venue,exhibition_artists,edition_type,edition_size,frame_included,created_at,updated_at,seller_id,status:review_status';
 
 // 서비스 롤 클라이언트로 쓰되, 모든 쿼리에 seller_id 조건을 강제해 애플리케이션 계층에서
 // 소유권을 검증한다(RLS를 seller까지 확장하는 대신 택한 방식 —
@@ -77,6 +77,16 @@ async function toPayload(input: MyProductInput, sellerId: string) {
     file_path: input.filePath,
     code_preview: sanitizeCodePreview(input.codePreview),
     license: input.license,
+    artwork_size: input.artworkSize || null,
+    artwork_medium: input.artworkMedium || null,
+    artwork_year: input.artworkYear || null,
+    exhibition_title: input.exhibitionTitle || null,
+    exhibition_period: input.exhibitionPeriod || null,
+    exhibition_venue: input.exhibitionVenue || null,
+    exhibition_artists: input.exhibitionArtists || null,
+    edition_type: input.editionType || null,
+    edition_size: input.editionSize || null,
+    frame_included: input.frameIncluded,
     seller_id: sellerId,
     review_status: input.status,
     // 신규 등록(create) 또는 아직 최초 승인을 못 받은 상품(draft/pending/rejected)의
@@ -123,6 +133,16 @@ export function toApiProduct(product: Product) {
     filePath: product.file_path,
     codePreview: product.code_preview,
     license: product.license,
+    artworkSize: product.artwork_size,
+    artworkMedium: product.artwork_medium,
+    artworkYear: product.artwork_year,
+    exhibitionTitle: product.exhibition_title,
+    exhibitionPeriod: product.exhibition_period,
+    exhibitionVenue: product.exhibition_venue,
+    exhibitionArtists: product.exhibition_artists,
+    editionType: product.edition_type,
+    editionSize: product.edition_size,
+    frameIncluded: product.frame_included,
     status: product.status,
     sellerId: product.seller_id,
     isActive: product.is_active,
@@ -130,6 +150,57 @@ export function toApiProduct(product: Product) {
     createdAt: product.created_at,
     updatedAt: product.updated_at,
   };
+}
+
+// 라이선스 확인 항목 동의를 증빙 이력으로 쌓는다(append-only, 덮어쓰기 없음). 동의 시각의
+// 기준은 recorded_at(서버 기록 시각)이고 client_agreed_at은 클라이언트가 보낸 참고값이다.
+// 입력이 없으면 아무것도 하지 않아 기존 이력이 보존된다. 모달을 거치지 않은 저장(예: 이미
+// 동의한 라이선스 그대로 수정)은 키 자체가 오지 않는다.
+const LICENSE_VALUES = [
+  'cc-by',
+  'cc-by-nc',
+  'cc-by-nc-nd',
+  'all-rights-reserved',
+] as const;
+
+async function recordLicenseAgreement(
+  sellerId: string,
+  product: Pick<Product, 'id' | 'slug' | 'license'>,
+  ack: MyProductInput['licenseAcknowledgement'],
+) {
+  if (!ack) return;
+  const agreedAt = new Date(ack.agreedAt);
+  if (
+    !LICENSE_VALUES.includes(ack.license) ||
+    // 동의한 라이선스와 실제 저장된 라이선스가 다르면 증빙이 되지 않는다.
+    ack.license !== product.license ||
+    typeof ack.version !== 'string' ||
+    ack.version.length === 0 ||
+    ack.version.length > 40 ||
+    Number.isNaN(agreedAt.getTime())
+  ) {
+    throw new MyProductError(
+      400,
+      '라이선스 동의 정보가 올바르지 않습니다.',
+      'licenseAcknowledgement',
+    );
+  }
+
+  const supabase = createAdminClient();
+  const { error } = await supabase
+    .from('moda_product_license_agreements')
+    .insert({
+      product_id: product.id,
+      product_slug: product.slug,
+      seller_id: sellerId,
+      license: ack.license,
+      version: ack.version,
+      client_agreed_at: agreedAt.toISOString(),
+    });
+  if (error) {
+    console.error('[recordLicenseAgreement]', error);
+    throw new Error('라이선스 동의 기록 저장에 실패했습니다.');
+  }
 }
 
 export async function getMyProducts(sellerId: string): Promise<Product[]> {
@@ -189,7 +260,20 @@ export async function createMyProduct(
     }
     throw new Error('상품 등록에 실패했습니다.');
   }
-  return data as unknown as Product;
+  const product = data as unknown as Product;
+  try {
+    await recordLicenseAgreement(
+      sellerId,
+      product,
+      input.licenseAcknowledgement,
+    );
+  } catch (agreementError) {
+    // 동의 기록 없이 등록된 상품이 남지 않도록 방금 만든 행을 되돌린다. 다시 저장하면
+    // 처음부터 다시 시도하게 되어 중복 상품이 생기지 않는다.
+    await supabase.from('moda_products').delete().eq('id', product.id);
+    throw agreementError;
+  }
+  return product;
 }
 
 export async function updateMyProduct(
@@ -245,7 +329,11 @@ export async function updateMyProduct(
     throw new Error('상품 수정에 실패했습니다.');
   }
   if (!data) throw new Error('본인 소유의 상품만 수정할 수 있습니다.');
-  return data as unknown as Product;
+  const product = data as unknown as Product;
+  // 수정은 같은 내용으로 다시 저장해도 되는 멱등 동작이라 기록 실패는 그대로 에러로 올려
+  // 판매자가 재시도하게 한다(이력 행만 중복될 수 있으나 증빙에는 영향이 없다).
+  await recordLicenseAgreement(sellerId, product, input.licenseAcknowledgement);
+  return product;
 }
 
 export async function deleteMyProduct(
