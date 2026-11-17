@@ -5,11 +5,11 @@
 -- 멱등: 여러 번 실행해도 안전하다.
 --
 -- ROLLBACK (필요 시):
---   drop table if exists public.seller_payout_accounts;
+--   drop table if exists public.moda_seller_payout_accounts;
 
 begin;
 
-create table if not exists public.seller_payout_accounts (
+create table if not exists public.moda_seller_payout_accounts (
   user_id uuid primary key references public.profiles(id) on delete cascade,
   bank_name text not null,
   account_holder text not null,
@@ -19,11 +19,11 @@ create table if not exists public.seller_payout_accounts (
   updated_at timestamptz not null default now()
 );
 
-alter table public.seller_payout_accounts enable row level security;
+alter table public.moda_seller_payout_accounts enable row level security;
 
-comment on table public.seller_payout_accounts is
+comment on table public.moda_seller_payout_accounts is
   '판매자 정산 계좌(1인 1계좌). 번호는 암호화 저장, 화면에는 끝 4자리만 노출';
-comment on column public.seller_payout_accounts.account_number_encrypted is
+comment on column public.moda_seller_payout_accounts.account_number_encrypted is
   'AES-256-GCM 암호문(v1:iv:tag:data, base64). 평문 번호는 저장하지 않는다';
 
 commit;

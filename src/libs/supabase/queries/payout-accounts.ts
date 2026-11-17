@@ -37,7 +37,7 @@ export async function getPayoutAccount(
 ): Promise<PayoutAccountSummary | null> {
   const supabase = createAdminClient();
   const { data, error } = await supabase
-    .from('seller_payout_accounts')
+    .from('moda_seller_payout_accounts')
     .select('bank_name, account_holder, account_last4, updated_at')
     .eq('user_id', userId)
     .maybeSingle();
@@ -54,7 +54,7 @@ export async function upsertPayoutAccount(
 ): Promise<PayoutAccountSummary> {
   const supabase = createAdminClient();
   const { data, error } = await supabase
-    .from('seller_payout_accounts')
+    .from('moda_seller_payout_accounts')
     .upsert(
       {
         user_id: userId,
@@ -78,7 +78,7 @@ export async function upsertPayoutAccount(
 export async function deletePayoutAccount(userId: string): Promise<void> {
   const supabase = createAdminClient();
   const { error } = await supabase
-    .from('seller_payout_accounts')
+    .from('moda_seller_payout_accounts')
     .delete()
     .eq('user_id', userId);
   if (error) {
