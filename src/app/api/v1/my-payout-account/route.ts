@@ -69,6 +69,7 @@ export async function PUT(request: NextRequest) {
       bankName?: unknown;
       accountHolder?: unknown;
       accountNumber?: unknown;
+      thirdPartyConsent?: unknown;
     };
     const bankName =
       typeof body.bankName === 'string' ? body.bankName.trim() : '';
@@ -95,6 +96,14 @@ export async function PUT(request: NextRequest) {
     if (!/^\d{8,20}$/.test(accountNumber)) {
       return NextResponse.json(
         { error: '계좌번호는 숫자 8~20자리로 입력해주세요.' },
+        { status: 400 },
+      );
+    }
+
+    // 구매자에게 계좌 전체가 보인다는 안내에 동의해야만 저장한다(개인정보 제3자 제공 동의)
+    if (body.thirdPartyConsent !== true) {
+      return NextResponse.json(
+        { error: '구매자에게 계좌를 보여주는 것에 동의해주세요.' },
         { status: 400 },
       );
     }
