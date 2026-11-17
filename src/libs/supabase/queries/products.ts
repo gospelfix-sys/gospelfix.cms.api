@@ -12,6 +12,7 @@ export interface ActiveProduct {
   discount_ends_at: string | null;
   is_active: boolean;
   allow_coupon: boolean;
+  seller_id: string | null;
 }
 
 /**
@@ -27,7 +28,7 @@ export async function getActiveProductById(
   const { data, error } = await supabase
     .from('moda_products')
     .select(
-      'id, price, supply_price, discount_starts_at, discount_ends_at, is_active, allow_coupon',
+      'id, price, supply_price, discount_starts_at, discount_ends_at, is_active, allow_coupon, seller_id',
     )
     .eq('id', productId)
     .eq('is_active', true)

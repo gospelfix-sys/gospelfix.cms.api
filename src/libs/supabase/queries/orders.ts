@@ -369,3 +369,36 @@ export async function getPurchasedOrders(
       : null,
   })) as PurchasedOrder[];
 }
+
+/**
+ * 본인의 pending 주문이 속한 상품의 판매자 id를 조회한다(입금 안내에 판매자 계좌를 보여주기 위함).
+ * 주문이 없거나 본인 것이 아니면 null, pending이 아니면 status만 담아 돌려준다.
+ */
+export async function getOrderSellerForPayment(
+  orderId: string,
+  userId: string,
+): Promise<{ status: string; amount: number; sellerId: string | null } | null> {
+  const supabase = createAdminClient();
+  const { data: order, error: orderError } = await supabase
+    .from('moda_orders')
+    .select('status, amount, product_id')
+    .eq('order_id', orderId)
+    .eq('user_id', userId)
+    .maybeSingle();
+  // DB 오류를 "주문 없음"으로 오인하지 않도록 던진다
+  if (orderError) throw orderError;
+  if (!order) return null;
+
+  const { data: product, error: productError } = await supabase
+    .from('moda_products')
+    .select('seller_id')
+    .eq('id', order.product_id)
+    .maybeSingle();
+  if (productError) throw productError;
+
+  return {
+    status: order.status as string,
+    amount: order.amount as number,
+    sellerId: (product?.seller_id as string | null | undefined) ?? null,
+  };
+}

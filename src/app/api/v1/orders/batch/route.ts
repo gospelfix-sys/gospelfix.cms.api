@@ -8,6 +8,13 @@ import {
   deleteOrdersByOrderIds,
 } from '@/libs/supabase/queries/orders';
 import { getEffectivePrice } from '@/libs/pricing/productPriceState';
+import { hasBuyerVisiblePayoutAccount } from '@/libs/supabase/queries/payout-accounts';
+import {
+  isSellerDirectTransferEnabled,
+  SELLER_ACCOUNT_REQUIRED_MESSAGE,
+  DIRECT_TRANSFER_PREPARING_MESSAGE,
+  MIXED_SELLER_MESSAGE,
+} from '@/libs/payout/sellerDirectTransfer';
 
 interface BatchOrderItem {
   productId: string;
@@ -54,6 +61,9 @@ export async function POST(request: NextRequest) {
     const user = await requireBearerUser(request);
 
     // 1단계: 전체 항목 검증 (하나라도 실패하면 아무것도 생성하지 않음)
+    const directTransfer = isSellerDirectTransferEnabled();
+    // 직접 입금 방식에서는 입금 계좌가 하나여야 하므로 한 번에 한 판매자의 상품만 결제할 수 있다
+    const sellerIds = new Set<string | null>();
     for (const item of items) {
       const product = await getActiveProductById(item.productId);
       if (!product) {
@@ -68,6 +78,15 @@ export async function POST(request: NextRequest) {
           { status: 400 },
         );
       }
+      if (item.amount > 0) {
+        if (!directTransfer) {
+          return NextResponse.json({ error: DIRECT_TRANSFER_PREPARING_MESSAGE }, { status: 409 });
+        }
+        sellerIds.add(product.seller_id);
+        if (!(product.seller_id && (await hasBuyerVisiblePayoutAccount(product.seller_id)))) {
+          return NextResponse.json({ error: SELLER_ACCOUNT_REQUIRED_MESSAGE }, { status: 409 });
+        }
+      }
       const alreadyPurchased = await hasPurchasedProduct(user.id, item.productId);
       if (alreadyPurchased) {
         return NextResponse.json(
@@ -75,6 +94,10 @@ export async function POST(request: NextRequest) {
           { status: 409 },
         );
       }
+    }
+
+    if (sellerIds.size > 1) {
+      return NextResponse.json({ error: MIXED_SELLER_MESSAGE }, { status: 400 });
     }
 
     // 2단계: 검증 통과한 항목만큼 pending 주문 생성

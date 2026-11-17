@@ -10,6 +10,12 @@ import {
 } from '@/libs/supabase/queries/orders';
 import { validateCouponForOrder } from '@/libs/supabase/queries/coupons';
 import { getEffectivePrice } from '@/libs/pricing/productPriceState';
+import { hasBuyerVisiblePayoutAccount } from '@/libs/supabase/queries/payout-accounts';
+import {
+  isSellerDirectTransferEnabled,
+  SELLER_ACCOUNT_REQUIRED_MESSAGE,
+  DIRECT_TRANSFER_PREPARING_MESSAGE,
+} from '@/libs/payout/sellerDirectTransfer';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -95,6 +101,16 @@ export async function POST(request: NextRequest) {
 
     if (basePrice - discountAmount !== amount) {
       return NextResponse.json({ error: '결제 금액이 올바르지 않습니다.' }, { status: 400 });
+    }
+
+    // 유료 주문은 판매자 계좌 직접 입금 방식이 켜져 있고, 구매자에게 보여줄 판매자 계좌가 있을 때만 받는다
+    if (amount > 0) {
+      if (!isSellerDirectTransferEnabled()) {
+        return NextResponse.json({ error: DIRECT_TRANSFER_PREPARING_MESSAGE }, { status: 409 });
+      }
+      if (!(product.seller_id && (await hasBuyerVisiblePayoutAccount(product.seller_id)))) {
+        return NextResponse.json({ error: SELLER_ACCOUNT_REQUIRED_MESSAGE }, { status: 409 });
+      }
     }
 
     // 동일 상품 중복 구매 방지
