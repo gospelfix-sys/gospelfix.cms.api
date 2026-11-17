@@ -102,7 +102,7 @@ export default function OrdersTable({
           {orders.map((order) => (
             <tr
               key={order.id}
-              className={`transition-colors hover:bg-gray-50 dark:hover:bg-gray-750 ${
+              className={`${
                 confirmingId === order.id ? 'opacity-40' : ''
               }`}
             >

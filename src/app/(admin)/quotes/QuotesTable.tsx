@@ -87,7 +87,7 @@ export default function QuotesTable({
                 <tr
                   key={quote.id}
                   onClick={() => router.push(`/quotes/${quote.id}`)}
-                  className="cursor-pointer transition-colors hover:bg-gray-50 dark:hover:bg-gray-750"
+                  className="cursor-pointer"
                 >
                   <td className="relative px-4 py-3 pl-6 text-gray-900 dark:text-gray-100 truncate max-w-[10rem]">
                     {!quote.viewed_at && (

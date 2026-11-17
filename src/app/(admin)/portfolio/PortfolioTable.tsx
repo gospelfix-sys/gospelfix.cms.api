@@ -57,7 +57,7 @@ function PortfolioRow({
     <div
       ref={setNodeRef}
       style={style}
-      className={`flex items-center gap-3 px-4 py-4 hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors ${
+      className={`flex items-center gap-3 px-4 py-4 ${
         isDragging ? 'relative z-10 opacity-40' : ''
       }`}
     >
