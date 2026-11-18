@@ -37,6 +37,11 @@ const PRODUCT_CONTENT_SANITIZE_OPTIONS: sanitizeHtml.IOptions = {
     'img',
     'div',
     'iframe',
+    // 에디터의 글자색·크기(span style), 코드 블록(pre/code), 줄바꿈(br)이 저장 시 지워지지 않게 한다.
+    'span',
+    'br',
+    'pre',
+    'code',
   ],
   allowedAttributes: {
     // target은 허용하지 않는다 — reverse tabnabbing 방지
@@ -44,6 +49,25 @@ const PRODUCT_CONTENT_SANITIZE_OPTIONS: sanitizeHtml.IOptions = {
     img: ['src', 'alt'],
     div: ['class'],
     iframe: ['src', 'class', 'allow', 'allowfullscreen', 'loading', 'title'],
+    // 에디터 TextAlign이 문단/제목 정렬을 inline style로 저장한다. style 자체는 아래
+    // allowedStyles로 text-align 값만 통과시키므로 다른 CSS 주입은 여전히 막힌다.
+    h1: ['style'],
+    h2: ['style'],
+    h3: ['style'],
+    p: ['style'],
+    span: ['style'],
+    code: ['class'],
+  },
+  // gospelfix `lib/sanitizeHtml.ts`의 allowedStyles와 같은 범위로 맞춘다(한쪽만 넓히면 렌더/저장 중 한 곳에서 지워진다).
+  allowedStyles: {
+    '*': {
+      color: [/^#[0-9a-fA-F]{3,6}$/, /^rgb\([\d\s,%.]+\)$/],
+      'text-align': [/^(?:left|right|center|justify)$/],
+      'font-size': [
+        /^(?:[89]|[1-8]\d|9[0-6])(\.\d+)?px$/,
+        /^(?:\d|10)(\.\d+)?(rem|em)$/,
+      ],
+    },
   },
   allowedSchemes: ['http', 'https'],
   allowedSchemesByTag: { img: ['http', 'https'] },
