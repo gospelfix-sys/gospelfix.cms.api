@@ -35,6 +35,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: err.message }, { status: err.status });
     }
     console.error('[auth/avatar] Unexpected error:', err);
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    return NextResponse.json(
+      { error: '프로필 이미지 업로드에 실패했습니다. 잠시 후 다시 시도해주세요.' },
+      { status: 500 },
+    );
   }
 }

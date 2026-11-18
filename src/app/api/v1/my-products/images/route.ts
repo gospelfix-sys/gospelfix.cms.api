@@ -46,9 +46,11 @@ export async function POST(request: NextRequest) {
         { status: error.status },
       );
     }
-    const message =
-      error instanceof Error ? error.message : '이미지 업로드에 실패했습니다.';
+    // 원문(영어) 메시지는 사용자 토스트에 그대로 노출되므로 로그에만 남기고 한국어로 응답한다.
     console.error('[POST /api/v1/my-products/images] error:', error);
-    return NextResponse.json({ error: message }, { status: 500 });
+    return NextResponse.json(
+      { error: '이미지 업로드에 실패했습니다. 잠시 후 다시 시도해주세요.' },
+      { status: 500 },
+    );
   }
 }

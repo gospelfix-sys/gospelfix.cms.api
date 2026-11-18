@@ -78,7 +78,10 @@ export const config = {
     '/',
     '/sign/in',
     '/api/auth/me',
-    '/api/v1/:path*',
+    // 멀티파트 업로드 라우트는 제외한다 — 미들웨어를 거치면 배포 환경에서 본문이 깨져
+    // request.formData()가 "Failed to parse body as FormData."로 실패했다(로컬은 정상).
+    // 이 라우트들은 앱 서버가 서버 간 호출하므로 CORS 헤더도 필요 없다.
+    '/api/v1/((?!(?:my-products/(?:images|files)|auth/avatar)$).*)',
     '/api/openapi.json',
     '/api-docs/:path*',
     '/users/:path*',
