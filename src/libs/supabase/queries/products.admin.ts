@@ -46,7 +46,8 @@ const PRODUCT_CONTENT_SANITIZE_OPTIONS: sanitizeHtml.IOptions = {
   allowedAttributes: {
     // target은 허용하지 않는다 — reverse tabnabbing 방지
     a: ['href', 'rel'],
-    img: ['src', 'alt'],
+    // class는 아래 allowedClasses로 gallery의 모바일 용도 표시(device-mobile)만 통과시킨다.
+    img: ['src', 'alt', 'class'],
     div: ['class'],
     iframe: ['src', 'class', 'allow', 'allowfullscreen', 'loading', 'title'],
     // 에디터 TextAlign이 문단/제목 정렬을 inline style로 저장한다. style 자체는 아래
@@ -58,6 +59,9 @@ const PRODUCT_CONTENT_SANITIZE_OPTIONS: sanitizeHtml.IOptions = {
     span: ['style'],
     code: ['class'],
   },
+  // 이미지 묶음의 사진별 Desktop/Mobile 용도(gospelfix uploadEditorUtils의 GALLERY_MOBILE_CLASS).
+  // 이게 지워지면 판매자가 Mobile로 바꿔 저장해도 모두 Desktop으로 돌아간다.
+  allowedClasses: { img: ['device-mobile'] },
   // gospelfix `lib/sanitizeHtml.ts`의 allowedStyles와 같은 범위로 맞춘다(한쪽만 넓히면 렌더/저장 중 한 곳에서 지워진다).
   allowedStyles: {
     '*': {
