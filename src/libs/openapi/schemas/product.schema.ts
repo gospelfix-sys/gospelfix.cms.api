@@ -245,6 +245,25 @@ export const ProductLikeToggleResponseSchema = z
   })
   .openapi('ProductLikeToggleResponse');
 
+export const ProductSellerResponseSchema = z
+  .object({
+    data: z.object({
+      registered_at: z.string().openapi({ example: '2026-11-17T04:13:22.621894+00:00' }),
+      seller: z
+        .object({
+          name: z.string().openapi({ example: 'GOSPELFIX' }),
+          avatar_url: z.string().nullable(),
+          handle: z.string().openapi({
+            example: 'th***',
+            description: '이메일 아이디 일부만 보이게 가린 값(원문 이메일은 반환하지 않는다)',
+          }),
+        })
+        .nullable()
+        .openapi({ description: '플랫폼 직접 등록 상품은 개인 판매자가 없어 null' }),
+    }),
+  })
+  .openapi('ProductSellerResponse');
+
 export function registerProductPaths(reg: OpenAPIRegistry) {
   reg.registerPath({
     method: 'get',
@@ -355,6 +374,37 @@ export function registerProductPaths(reg: OpenAPIRegistry) {
       },
       401: {
         description: '인증 실패',
+        content: {
+          'application/json': { schema: z.object({ error: z.string() }) },
+        },
+      },
+    },
+  });
+
+  reg.registerPath({
+    method: 'get',
+    path: '/api/v1/products/{id}/seller',
+    summary: '상품 등록일 · 판매자 공개 정보 조회',
+    description:
+      '공개 엔드포인트. 상품 상세 상단(등록일·판매자 프로필)용. 판매자 이메일은 앞 일부만 보이게 가려서 반환한다. 활성(is_active) 상품만 조회된다.',
+    security: [{ ApiKeyAuth: [] }],
+    request: {
+      params: z.object({
+        id: z
+          .string()
+          .uuid()
+          .openapi({ example: '550e8400-e29b-41d4-a716-446655440000' }),
+      }),
+    },
+    responses: {
+      200: {
+        description: '등록일과 판매자 정보',
+        content: {
+          'application/json': { schema: ProductSellerResponseSchema },
+        },
+      },
+      404: {
+        description: '상품을 찾을 수 없음',
         content: {
           'application/json': { schema: z.object({ error: z.string() }) },
         },
