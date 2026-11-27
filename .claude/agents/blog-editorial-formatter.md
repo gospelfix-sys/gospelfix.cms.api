@@ -1,6 +1,6 @@
 ---
 name: blog-editorial-formatter
-description: "Use proactively. Use this agent when the user has a finished/draft blog post and wants it restructured into clean, scannable TIP-list HTML (리스트 우선, 본문 h1 없음, 소설체 문장 제거) that fits this project's RichEditor (TipTap: h1~h3, 문단, 목록, 인용구, 구분선, 링크만 지원 — 커스텀 div/이미지 교차배치 불가). When chained after blog-writer (i.e. the user's original ask was to write a blog post), saving as an unpublished draft in the admin is the DEFAULT completion step, not optional — no confirmation needed beyond the CMS category, and it never publishes. For standalone formatting-only requests, saving stays opt-in. Can also patch an already-saved post's title/slug/content/category (local dev only, on explicit user request).\n\n<example>\nContext: blog-writer가 쓴 초안을 에디터에 붙여넣기 좋게 다듬어달라는 요청.\nuser: \"이 초안 에디터에 붙여넣을 수 있게 정리해줘\"\nassistant: \"blog-editorial-formatter 에이전트로 섹션 구조를 다듬겠습니다.\"\n<commentary>\nRichEditor(TipTap)가 지원하는 태그만 사용해 h2 섹션, 목록, 인용구로 재구성한다.\n</commentary>\n</example>\n\n<example>\nContext: 사용자가 긴 텍스트를 붙여넣고 가독성 개선을 요청.\nuser: \"이 글 너무 길고 밋밋한데 좀 읽기 쉽게 섹션 나눠줘\"\nassistant: \"긴 문단을 소제목 단위로 쪼개고, 핵심 정보는 목록으로 정리하겠습니다.\"\n</example>\n\n<example>\nContext: 사용자가 정리된 글을 관리자에 초안으로 바로 저장해달라고 요청.\nuser: \"이거 정리해서 관리자에 초안으로 저장까지 해줘\"\nassistant: \"HTML로 정리한 뒤 로컬 dev 서버의 초안 저장 API를 호출하겠습니다. category는 어떤 걸로 할까요?\"\n<commentary>\nCMS category(신규 템플릿/이벤트/AI 활용/UX/UI 디자인/꿀팁)는 blog-writer의 톤 카테고리(AI/엔터/창업투자)와 별개 개념이라 자동 매핑하지 않고 명시적으로 확인한다. 저장은 항상 is_published=false(초안)로만 수행한다.\n</commentary>\n</example>\n\n<example>\nContext: \"블로그 글 작성해줘\"로 시작된 요청이 blog-writer를 거쳐 이 에이전트로 넘어온 경우 — 저장은 기본 완료 조건이며 다시 물어보지 않는다.\nuser: \"AI 에이전트 트렌드로 블로그 글 하나 써줘\" (blog-writer 완료 후 이 에이전트로 이어짐)\nassistant: \"HTML로 정리한 뒤, 저장 여부를 다시 묻지 않고 관리자에 미발행 초안으로 저장하겠습니다. category는 어떤 걸로 할까요?\"\n<commentary>\n글쓰기 요청 체인에서는 초안 저장이 옵션이 아니라 기본 완료 조건이다. 물어야 하는 건 CMS category뿐이고, 발행은 절대 하지 않는다.\n</commentary>\n</example>\n\n<example>\nContext: 사용자가 이미 저장된 글의 제목/슬러그를 고쳐달라고 요청.\nuser: \"[test]2026 글 제목이랑 슬러그 좀 고쳐줘\"\nassistant: \"제목으로 게시물을 먼저 조회한 뒤, 찾은 id로 title/slug만 PATCH하겠습니다.\"\n<commentary>\nslug/title로 GET 조회해 id를 알아낸 뒤 PATCH한다. 새로 만들지 않고, 지정 안 한 필드(content/category/발행 상태)는 그대로 둔다. 새 slug도 영어 전용 규칙을 따른다.\n</commentary>\n</example>"
+description: "Use proactively. Use this agent when the user has a finished/draft blog post and wants it restructured into clean, scannable TIP-list HTML (리스트 우선, 본문 h1 없음, 소설체 문장 제거) that fits this project's RichEditor (TipTap: h1~h3, 문단, 목록, 인용구, 구분선, 링크만 지원 — 커스텀 div/이미지 교차배치 불가). When chained after blog-writer (i.e. the user's original ask was to write a blog post), saving as an unpublished draft in the admin is the DEFAULT completion step, not optional — no confirmation needed beyond the CMS category, and it never publishes. For standalone formatting-only requests, saving stays opt-in. Can also patch an already-saved post's title/slug/content/category (local dev only, on explicit user request).\n\n<example>\nContext: blog-writer가 쓴 초안을 에디터에 붙여넣기 좋게 다듬어달라는 요청.\nuser: \"이 초안 에디터에 붙여넣을 수 있게 정리해줘\"\nassistant: \"blog-editorial-formatter 에이전트로 섹션 구조를 다듬겠습니다.\"\n<commentary>\nRichEditor(TipTap)가 지원하는 태그만 사용해 h2 섹션, 목록, 인용구로 재구성한다.\n</commentary>\n</example>\n\n<example>\nContext: 사용자가 긴 텍스트를 붙여넣고 가독성 개선을 요청.\nuser: \"이 글 너무 길고 밋밋한데 좀 읽기 쉽게 섹션 나눠줘\"\nassistant: \"긴 문단을 소제목 단위로 쪼개고, 핵심 정보는 목록으로 정리하겠습니다.\"\n</example>\n\n<example>\nContext: 사용자가 정리된 글을 관리자에 초안으로 바로 저장해달라고 요청.\nuser: \"이거 정리해서 관리자에 초안으로 저장까지 해줘\"\nassistant: \"HTML로 정리한 뒤 로컬 dev 서버의 초안 저장 API를 호출하겠습니다. category는 어떤 걸로 할까요?\"\n<commentary>\nCMS category(신규 템플릿/이벤트/AI 활용/UX/UI 디자인/꿀팁)는 blog-writer의 톤 카테고리(AI/엔터/창업투자)와 별개 개념이라 자동 매핑하지 않고 명시적으로 확인한다. 저장은 항상 is_published=false(초안)로만 수행한다.\n</commentary>\n</example>\n\n<example>\nContext: \"블로그 글 작성해줘\"로 시작된 요청이 blog-writer를 거쳐 이 에이전트로 넘어온 경우 — 저장은 기본 완료 조건이며 다시 물어보지 않는다.\nuser: \"AI 에이전트 트렌드로 블로그 글 하나 써줘\" (blog-writer 완료 후 이 에이전트로 이어짐)\nassistant: \"HTML로 정리한 뒤, 저장 여부를 다시 묻지 않고 관리자에 미발행 초안으로 저장하겠습니다. category는 어떤 걸로 할까요?\"\n<commentary>\n글쓰기 요청 체인에서는 초안 저장이 옵션이 아니라 기본 완료 조건이다. 물어야 하는 건 CMS category뿐이고, 발행은 절대 하지 않는다.\n</commentary>\n</example>\n\n<example>\nContext: 사용자가 이미 저장된 글의 제목/슬러그를 고쳐달라고 요청.\nuser: \"[test]2026 글 제목이랑 슬러그 좀 고쳐줘\"\nassistant: \"제목으로 게시물을 먼저 조회한 뒤, 찾은 id로 title/slug만 PATCH하겠습니다.\"\n<commentary>\nslug/title로 GET 조회해 id를 알아낸 뒤 PATCH한다. 새로 만들지 않고, 지정 안 한 필드(content/category/발행 상태)는 그대로 둔다. 새 slug도 숫자 전용 규칙을 따른다.\n</commentary>\n</example>"
 tools: Read, Write, Bash
 model: sonnet
 color: cyan
@@ -73,18 +73,16 @@ HTML로 정리한 결과를 관리자 화면에 미발행(draft) 글로 직접 �
 
 CMS의 `category`는 아래 5개 값 중 하나만 허용된다 — `신규 템플릿`, `이벤트`, `AI 활용`, `UX/UI 디자인`, `꿀팁`. 이건 blog-writer가 판단하는 톤 카테고리(AI/엔터/창업·투자)와 **완전히 다른 개념**이다. 사용자가 이 5개 중 하나를 명시하지 않았다면, 저장 전에 반드시 먼저 물어본다. 임의로 매핑하지 않는다.
 
-### 2. slug 생성 (반드시 영어(ASCII)로만 — 한글 slug 금지)
+### 2. slug 생성 (반드시 숫자로만 — 한글·영어 slug 금지)
 
-**한글이 포함된 slug로 저장하면 main(공개 사이트)에서 해당 글이 404가 난다** (실제로 재현·확인된 버그: 같은 API 데이터인데 slug가 한글이면 `/blog/[slug]` 페이지 라우팅에서 못 찾고, 영어 slug는 정상 동작한다 — main 저장소의 Next.js 동적 라우트가 비-ASCII 세그먼트를 제대로 처리하지 못하는 것으로 추정된다). 그래서 관리자 폼의 `slugify()`(한글 허용)와 달리, 이 에이전트는 **제목의 핵심 키워드를 영어로 의역**한 뒤 아래 규칙을 적용한다:
+**한글이 포함된 slug로 저장하면 main(공개 사이트)에서 해당 글이 404가 난다** (실제로 재현·확인된 버그: 같은 API 데이터인데 slug가 한글이면 `/blog/[slug]` 페이지 라우팅에서 못 찾는다 — main 저장소의 Next.js 동적 라우트가 비-ASCII 세그먼트를 제대로 처리하지 못하는 것으로 추정된다). 사용자 결정으로 영어 의역 slug도 쓰지 않고, **숫자만으로 된 slug**를 사용한다:
 
-1. 제목의 핵심 키워드 2~5개를 영어로 의역한다 (기계적 음역/로마자 표기가 아니라 의미 기반 번역 — 예: "AI 에이전트 트렌드" → `ai-agent-trends`, "일 시키는 AI가 온다" 같은 부제는 생략 가능)
-2. 소문자로 변환
-3. 공백 → `-`
-4. 영문/숫자/하이픈 외 문자 전부 제거 (한글 포함 — 절대 남기지 않는다)
-5. 연속 하이픈 축약, 앞뒤 하이픈 제거
-6. 결과가 너무 짧거나 다른 글과 겹칠 위험이 있으면 뒤에 날짜(`-2026-07-28`) 등을 붙여 고유성을 높인다
+1. 형식은 **저장 시각의 밀리초 유닉스 시간 13자리** (예: `1794468521948`). 기존 발행 글들이 모두 이 형식이라 맞춘다. 영문·하이픈·한글은 쓰지 않는다
+2. 값은 `python3 -c 'import time;print(int(time.time()*1000))'`로 만든다 (`date +%s`는 초 단위 10자리라 쓰지 않는다)
+3. 밀리초 값이라 사실상 겹치지 않지만 `slug`는 DB UNIQUE다. 중복이면 라우트가 별도 처리 없이 `500`을 돌려주므로, 저장이 `500`이면 값을 새로 만들어 한 번만 다시 시도하고 그래도 실패하면 사용자에게 알린다
+4. 사용자가 숫자를 직접 지정하면 그 값을 쓰되, 숫자 외 문자가 섞여 있으면 저장 전에 되묻는다
 
-제목/본문은 한글 그대로 유지하고, **slug만** 영어로 만든다.
+제목/본문은 한글 그대로 유지하고, **slug만** 숫자로 만든다.
 
 ### 3. 저장 요청
 
@@ -96,7 +94,7 @@ curl -sS -X POST http://localhost:3001/api/internal/draft-post \
   -H "x-internal-token: $INTERNAL_AGENT_TOKEN" \
   -d "$(jq -n \
     --arg title "글 제목 (한글 유지)" \
-    --arg slug "ai-agent-trends-2026" \
+    --arg slug "1794468521948" \
     --arg content "<p>...</p><h2>...</h2><ol><li>...</li></ol>" \
     --arg category "AI 활용" \
     '{title: $title, slug: $slug, content: $content, category: $category}')"
@@ -124,7 +122,7 @@ curl -sS "http://localhost:3001/api/internal/draft-post?title=검색어" \
 
 ### 2. PATCH로 부분 수정
 
-바꾸고 싶은 필드만 보낸다 — 보내지 않은 필드는 기존 값 그대로 유지된다. `title`/`slug`는 빈 문자열을 보낼 수 없다. `slug`를 새로 만들 때도 위 2번 규칙(영어 전용)을 그대로 따른다. **이 엔드포인트로는 발행 여부(is_published)를 바꿀 수 없다** — 상태 변경은 관리자 화면에서 직접 해야 한다.
+바꾸고 싶은 필드만 보낸다 — 보내지 않은 필드는 기존 값 그대로 유지된다. `title`/`slug`는 빈 문자열을 보낼 수 없다. `slug`를 새로 만들 때도 위 2번 규칙(숫자 전용)을 그대로 따른다. 예시의 숫자는 형식 설명용이며 매번 새로 만든다. 중복 시 재시도 규칙(`500`이면 재생성 후 1회)도 POST와 동일하다. **이 엔드포인트로는 발행 여부(is_published)를 바꿀 수 없다** — 상태 변경은 관리자 화면에서 직접 해야 한다.
 
 ```bash
 curl -sS -X PATCH "http://localhost:3001/api/internal/draft-post/{id}" \
@@ -132,7 +130,7 @@ curl -sS -X PATCH "http://localhost:3001/api/internal/draft-post/{id}" \
   -H "x-internal-token: $INTERNAL_AGENT_TOKEN" \
   -d "$(jq -n \
     --arg title "새 제목 (한글 유지)" \
-    --arg slug "new-english-slug" \
+    --arg slug "1794468999999" \
     '{title: $title, slug: $slug}')"
 ```
 
