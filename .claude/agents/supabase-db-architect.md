@@ -28,11 +28,12 @@ This project is **statkit.cms.api**, a Next.js-based CMS with Supabase as the ba
 - **Backup files**: Always reference and read files under `supabase/backups/` when dealing with schema history or restore operations
 - **SQL 실행 방식 (2026-09-05 정책 변경)**: 이 프로젝트는 이제 Supabase에 직접 접근해 SQL로 컨트롤한다.
   DDL/DML을 **직접 실행**한다 — 더 이상 "SQL 파일만 작성하고 사용자가 대시보드에서 실행"하는
-  방식이 아니다. `supabase/migrations/`에는 **신규 파일을 작성하지 않는다** (기존 001~003 파일은
-  과거 기록으로만 남아 있고, 그 자체를 지우거나 건드릴 필요는 없다 — 단지 이후 스키마 변경 작업의
-  산출물로 새 번호 파일을 추가하지 않는다는 뜻이다).
-  로컬 마이그레이션 파일을 안 남기는 대신 **Supabase 자체 마이그레이션 이력**으로 감사 추적을
-  대체한다 — 그래서 DDL과 DML은 도구를 구분해서 쓴다:
+  방식이 아니다. **SQL은 반드시 `supabase/migrations/NNN_*.sql`에 파일로 남긴다**
+  (2026-11-27 사용자 지시로 복원 — `.claude/plans/` 등 gitignore 대상 경로에 SQL을 두지 않는다.
+  이력이 git에 남지 않기 때문이다). `ls supabase/migrations/`로 최대 번호를 확인해 다음 번호를
+  쓰고, 헤더·`content_api_configs` 멱등 UPDATE·`ROLLBACK (DOWN)` 주석은 `005_*`/`008_*` 패턴을
+  따른다. MCP로 직접 실행이 가능하면 파일과 같은 내용을 실행하고, MCP가 없는 세션이면 파일만
+  작성해 사용자가 대시보드에서 실행하게 한다. 그래서 DDL과 DML은 도구를 구분해서 쓴다:
   - **DDL**(`CREATE`/`ALTER`/`DROP TABLE`·`COLUMN`, 인덱스, RLS 정책 등 스키마 변경)
     → `mcp__supabase__apply_migration` 사용. 이 도구로 실행한 변경은 Supabase 프로젝트의
     `supabase_migrations.schema_migrations`에 자동 기록되어 대시보드 Database → Migrations
@@ -112,12 +113,13 @@ Whenever you work on schema changes, migrations, or need historical context:
 - Test policies mentally against edge cases (anonymous users, service role bypass, etc.)
 - Document the security intent of each policy
 
-### 4. 스키마 변경 실행 (2026-09-05부터: 마이그레이션 파일 작성 안 함)
+### 4. 스키마 변경 실행 (2026-11-27부터: 마이그레이션 파일 필수)
 
-- `supabase/migrations/`에 신규 파일을 만들지 않는다 (기존 001~003은 과거 기록으로만 유지). 대신
-  DDL은 `mcp__supabase__apply_migration`으로, DML은 `mcp__supabase__execute_sql`로 **직접
-  실행**한다 — `apply_migration`이 Supabase 자체 마이그레이션 이력에 기록을 남기므로 로컬 파일이
-  없어도 감사 추적이 유지된다.
+- 모든 SQL(DDL·`content_api_configs` UPDATE 포함)은 `supabase/migrations/NNN_*.sql`에 파일로
+  남긴다. 다음 번호는 `ls supabase/migrations/`로 확인한다(2026-11-27 기준 최신 008). 실행 수단은
+  그대로다 — DDL은 `mcp__supabase__apply_migration`, DML은 `mcp__supabase__execute_sql`. MCP가
+  없는 세션에서는 파일만 작성하고 실행은 사용자에게 안내한다. `.claude/plans/` 같은 gitignore
+  경로에 SQL을 두지 않는다.
 - 실행할 SQL은 먼저 사용자에게 전체 내용을 보여준 뒤 실행한다 — 특히 컬럼/테이블 DROP, 타입 변경,
   대량 UPDATE/DELETE 같은 파괴적 변경은 실행 전 명시적 확인을 받는다.
 - 여러 단계로 이뤄진 변경을 `BEGIN`/`COMMIT` 트랜잭션으로 묶을 때는 하나의 도구 호출 문자열
@@ -205,7 +207,7 @@ Before delivering any SQL or schema:
 - [ ] 변경 대상 테이블이 `content_api_configs`에 매핑돼 있다면 `select_columns` 화이트리스트 갱신 SQL도 함께 실행했는가
 - [ ] 응답에 노출되는 필드라면 `src/libs/openapi/schemas/*.schema.ts`도 함께 갱신했는가
 - [ ] 파괴적 변경(DROP, 타입 변경, 대량 UPDATE/DELETE)이라면 실행 전 SQL 원문을 보여주고 사용자 확인을 받았는가
-- [ ] DDL은 `mcp__supabase__apply_migration`, DML은 `mcp__supabase__execute_sql`로 직접 실행했는가 (`supabase/migrations/`에 신규 파일을 작성하지 않았는가)
+- [ ] DDL은 `mcp__supabase__apply_migration`, DML은 `mcp__supabase__execute_sql`로 직접 실행했는가 (SQL을 `supabase/migrations/NNN_*.sql` 파일로도 남겼는가)
 - [ ] 트랜잭션이 필요한 다단계 변경을 BEGIN~COMMIT 분리 호출 없이 단일 호출 문자열로 실행했는가
 - [ ] 실행 후 결과를 검증하고 사용자에게 보고했는가
 
