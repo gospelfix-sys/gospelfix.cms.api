@@ -5,6 +5,7 @@ import { getActiveProductSubCategoryValues } from '@/libs/supabase/queries/produ
 import type {
   Product,
   ProductCodePreviewItem,
+  ProductInfoChip,
   ProductPurchaseOption,
 } from '@/types/product';
 
@@ -88,7 +89,7 @@ export function sanitizeProductContentHtml(content: string): string {
 // 무관한 레거시 컬럼이라 충돌을 피해 DB 컬럼명은 review_status를 쓰되 앱 필드명은
 // status로 별칭 처리한다(056_fix_products_status_column_collision 메모리 참고).
 const ADMIN_SELECT_COLUMNS =
-  'id,slug,name,description,content_html,discount_starts_at,discount_ends_at,category,sub_categories,price,thumbnail_url,images,demo_url,is_active,sort_order,supply_price,purchase_options:options,production_solution,product_code,design_type,like_count,has_ai_starter_kit,allow_coupon,file_path,code_preview,license,created_at,updated_at,seller_id,status:review_status';
+  'id,slug,name,description,content_html,discount_starts_at,discount_ends_at,category,sub_categories,price,thumbnail_url,images,demo_url,is_active,sort_order,supply_price,purchase_options:options,production_solution,product_code,design_type,like_count,has_ai_starter_kit,allow_coupon,file_path,code_preview,info_chips,license,created_at,updated_at,seller_id,status:review_status';
 
 export function assertValidUUID(id: string): void {
   if (!id || !UUID_REGEX.test(id))
@@ -129,6 +130,37 @@ export function sanitizeCodePreview(
       label: item.label.trim(),
       code: item.code,
     }));
+}
+
+// 정보 칩 상한. 클라이언트(gospelfix)의 MAX_INFO_CHIPS/글자수 제한과 같은 값이며, 우회 요청을
+// 막기 위해 서버에서도 강제한다.
+const MAX_INFO_CHIPS = 10;
+const MAX_INFO_CHIP_LABEL_LENGTH = 20;
+const MAX_INFO_CHIP_VALUE_LENGTH = 60;
+
+// 라벨·값이 둘 다 있는 행만 저장한다. 외부 입력이라 배열·문자열 타입부터 확인하고, id는
+// 비었거나 문자열이 아니면 새로 만든다(React key 용도라 값 자체에 의미는 없다).
+export function sanitizeInfoChips(items: unknown): ProductInfoChip[] {
+  if (!Array.isArray(items)) return [];
+  const chips: ProductInfoChip[] = [];
+  for (const item of items) {
+    if (chips.length >= MAX_INFO_CHIPS) break;
+    if (typeof item !== 'object' || item === null) continue;
+    const { id, label, value } = item as Record<string, unknown>;
+    if (typeof label !== 'string' || typeof value !== 'string') continue;
+    const trimmedLabel = label.trim().slice(0, MAX_INFO_CHIP_LABEL_LENGTH);
+    const trimmedValue = value.trim().slice(0, MAX_INFO_CHIP_VALUE_LENGTH);
+    if (!trimmedLabel || !trimmedValue) continue;
+    chips.push({
+      id:
+        typeof id === 'string' && id.length > 0
+          ? id.slice(0, 64)
+          : crypto.randomUUID(),
+      label: trimmedLabel,
+      value: trimmedValue,
+    });
+  }
+  return chips;
 }
 
 // 업종 소분류 태그 최대 개수(비즈니스 규칙, taxonomy 값과 무관하게 고정).
@@ -262,6 +294,8 @@ export async function duplicateProduct(id: string): Promise<Product> {
       // 코드 미리보기는 파일 참조가 아니라 순수 텍스트 발췌본이라 content_html과
       // 마찬가지로 복사본에도 그대로 옮긴다
       code_preview: original.code_preview,
+      // 정보 칩도 순수 텍스트라 복사본에 그대로 옮긴다
+      info_chips: original.info_chips,
       license: original.license,
       is_active: false,
       sort_order: newSortOrder,

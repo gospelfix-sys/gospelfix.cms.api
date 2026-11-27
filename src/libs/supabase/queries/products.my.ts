@@ -3,6 +3,7 @@ import {
   assertValidUUID,
   sanitizeCategory,
   sanitizeCodePreview,
+  sanitizeInfoChips,
   sanitizeProductContentHtml,
   sanitizePurchaseOptions,
   sanitizeSubCategories,
@@ -25,7 +26,7 @@ export class MyProductError extends Error {
 // status로 별칭 처리한다 — status(단수)는 001부터 있던 무관한 레거시 컬럼이라 충돌 방지
 // (056_fix_products_status_column_collision 참고).
 const MY_SELECT_COLUMNS =
-  'id,slug,name,description,content_html,discount_starts_at,discount_ends_at,category,sub_categories,price,thumbnail_url,images,demo_url,is_active,sort_order,supply_price,purchase_options:options,production_solution,product_code,design_type,like_count,has_ai_starter_kit,allow_coupon,file_path,code_preview,license,artwork_size,artwork_medium,artwork_year,exhibition_title,exhibition_period,exhibition_venue,exhibition_artists,edition_type,edition_size,frame_included,created_at,updated_at,seller_id,status:review_status';
+  'id,slug,name,description,content_html,discount_starts_at,discount_ends_at,category,sub_categories,price,thumbnail_url,images,demo_url,is_active,sort_order,supply_price,purchase_options:options,production_solution,product_code,design_type,like_count,has_ai_starter_kit,allow_coupon,file_path,code_preview,info_chips,license,artwork_size,artwork_medium,artwork_year,exhibition_title,exhibition_period,exhibition_venue,exhibition_artists,edition_type,edition_size,frame_included,created_at,updated_at,seller_id,status:review_status';
 
 // 서비스 롤 클라이언트로 쓰되, 모든 쿼리에 seller_id 조건을 강제해 애플리케이션 계층에서
 // 소유권을 검증한다(RLS를 seller까지 확장하는 대신 택한 방식 —
@@ -78,6 +79,10 @@ async function toPayload(input: MyProductInput, sellerId: string) {
     ...(input.allowCoupon !== undefined && { allow_coupon: input.allowCoupon }),
     file_path: input.filePath,
     code_preview: sanitizeCodePreview(input.codePreview),
+    // 키를 빼고 보낸 구버전 요청이 기존 칩을 빈 배열로 덮어쓰지 않게 값이 있을 때만 넣는다
+    ...(input.infoChips !== undefined && {
+      info_chips: sanitizeInfoChips(input.infoChips),
+    }),
     license: input.license,
     artwork_size: input.artworkSize || null,
     artwork_medium: input.artworkMedium || null,
@@ -135,6 +140,7 @@ export function toApiProduct(product: Product) {
     allowCoupon: product.allow_coupon,
     filePath: product.file_path,
     codePreview: product.code_preview,
+    infoChips: product.info_chips ?? [],
     license: product.license,
     artworkSize: product.artwork_size,
     artworkMedium: product.artwork_medium,

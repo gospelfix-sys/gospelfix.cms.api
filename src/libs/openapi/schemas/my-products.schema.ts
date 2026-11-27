@@ -25,6 +25,12 @@ const CodePreviewItemSchema = z.object({
   code: z.string(),
 });
 
+const InfoChipSchema = z.object({
+  id: z.string().max(64),
+  label: z.string().max(20),
+  value: z.string().max(60),
+});
+
 const LicenseSchema = z
   .enum([
     'cc-by',
@@ -70,6 +76,7 @@ export const MyProductSchema = z
     allowCoupon: z.boolean(),
     filePath: z.string().nullable(),
     codePreview: z.array(CodePreviewItemSchema).nullable(),
+    infoChips: z.array(InfoChipSchema),
     license: LicenseSchema,
     artworkSize: z.string().nullable(),
     artworkMedium: z.string().nullable(),
@@ -121,6 +128,8 @@ const MyProductInputSchema = z
     allowCoupon: z.boolean().optional(),
     filePath: z.string().nullable(),
     codePreview: z.array(CodePreviewItemSchema),
+    // 생략하면 기존 값을 유지한다(생성 시 기본 []). 최대 10개, 서버가 trim·빈 행 제거·길이 절삭
+    infoChips: z.array(InfoChipSchema).max(10).optional(),
     license: LicenseSchema,
     // 미술·전시 탭 — 미입력은 빈 문자열/false. 길이 상한은 DB 오남용 방지용
     artworkSize: z.string().max(100),

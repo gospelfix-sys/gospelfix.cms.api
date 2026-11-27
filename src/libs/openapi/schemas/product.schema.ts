@@ -41,6 +41,15 @@ export const ProductCodePreviewItemSchema = z
   })
   .openapi('ProductCodePreviewItem');
 
+// products.info_chips(jsonb) 원소 하나에 대응. 판매자가 상품마다 직접 정하는 라벨·값 쌍
+export const ProductInfoChipSchema = z
+  .object({
+    id: z.string().openapi({ example: 'c3d4e5f6-a7b8-4901-bcde-f01234567890' }),
+    label: z.string().openapi({ example: '진행방식' }),
+    value: z.string().openapi({ example: '전 과정 온라인' }),
+  })
+  .openapi('ProductInfoChip');
+
 export const ProductSchema = z
   .object({
     id: z
@@ -187,6 +196,17 @@ export const ProductSchema = z
           },
         ],
       }),
+    info_chips: z.array(ProductInfoChipSchema).openapi({
+      description:
+        '상품 상세페이지 정보 칩 배열(최대 10개, 배열 순서가 표시 순서). 비어있으면 프론트가 기본 칩으로 대체한다.',
+      example: [
+        {
+          id: 'c3d4e5f6-a7b8-4901-bcde-f01234567890',
+          label: '진행방식',
+          value: '전 과정 온라인',
+        },
+      ],
+    }),
     license: z
       .enum([
         'cc-by',

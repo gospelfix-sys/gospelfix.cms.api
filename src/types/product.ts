@@ -6,6 +6,14 @@ export interface ProductCodePreviewItem {
   code: string;
 }
 
+// 상품 상세페이지 정보 칩 1개(예: 라벨 "진행방식", 값 "전 과정 온라인").
+// 판매자가 상품마다 자유롭게 추가/삭제하며 순서가 곧 표시 순서다.
+export interface ProductInfoChip {
+  id: string;
+  label: string;
+  value: string;
+}
+
 // 상품 상세페이지 우측 "구매항목" 옵션 카드 1개
 export interface ProductPurchaseOption {
   id: string;
@@ -68,6 +76,8 @@ export interface Product {
   file_path: string | null;
   // 상품 상세페이지 "코드 미리보기" 섹션 탭 배열 (비어있으면 섹션 자체를 숨김)
   code_preview: ProductCodePreviewItem[] | null;
+  // 상품 상세페이지 정보 칩 배열(진행방식·제공형태 등). 비어있으면 프론트가 기본 칩으로 폴백한다
+  info_chips: ProductInfoChip[];
   // 저작권 및 라이선스 구분. DB CHECK 제약으로 5개 값만 허용(002_add_products_license,
   // service-delivery는 004_add_service_delivery_license에서 추가)
   license:
@@ -131,6 +141,9 @@ export interface MyProductInput {
   allowCoupon?: boolean;
   filePath: string | null;
   codePreview: ProductCodePreviewItem[];
+  // 구버전 클라이언트가 키를 빼고 보내도 저장이 거부되지 않게 선택값으로 둔다.
+  // 없으면 기존 값을 유지한다(생성 시에는 DB 기본값 [])
+  infoChips?: ProductInfoChip[];
   license: Product['license'];
   artworkSize: string;
   artworkMedium: string;
