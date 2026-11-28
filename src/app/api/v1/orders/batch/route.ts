@@ -8,6 +8,8 @@ import {
   deleteOrdersByOrderIds,
 } from '@/libs/supabase/queries/orders';
 import { getEffectivePrice } from '@/libs/pricing/productPriceState';
+import { buildOrderAmounts, type VatBreakdown } from '@/libs/pricing/vat';
+import { getApprovedSellerTaxType } from '@/libs/supabase/queries/seller-identity';
 import { hasBuyerVisiblePayoutAccount } from '@/libs/supabase/queries/payout-accounts';
 import {
   isSellerDirectTransferEnabled,
@@ -64,6 +66,11 @@ export async function POST(request: NextRequest) {
     const directTransfer = isSellerDirectTransferEnabled();
     // 직접 입금 방식에서는 입금 계좌가 하나여야 하므로 한 번에 한 판매자의 상품만 결제할 수 있다
     const sellerIds = new Set<string | null>();
+    // 항목별 공급가·부가세(2단계 주문 생성에서 그대로 저장)
+    const amountsByProduct = new Map<
+      string,
+      VatBreakdown & { taxTypeSnapshot: string | null }
+    >();
     for (const item of items) {
       const product = await getActiveProductById(item.productId);
       if (!product) {
@@ -72,7 +79,12 @@ export async function POST(request: NextRequest) {
           { status: 404 },
         );
       }
-      if (getEffectivePrice(product) !== item.amount) {
+      const taxType = product.seller_id
+        ? await getApprovedSellerTaxType(product.seller_id)
+        : null;
+      const amounts = buildOrderAmounts(getEffectivePrice(product), taxType);
+      amountsByProduct.set(item.productId, amounts);
+      if (amounts.total !== item.amount) {
         return NextResponse.json(
           { error: `결제 금액이 올바르지 않습니다. (productId: ${item.productId})` },
           { status: 400 },
@@ -105,12 +117,16 @@ export async function POST(request: NextRequest) {
     try {
       for (const item of items) {
         const orderId = crypto.randomUUID();
+        const amounts = amountsByProduct.get(item.productId);
         await createPendingOrder({
           userId: user.id,
           productId: item.productId,
           orderId,
           amount: item.amount,
           agreedToWithdrawalNotice,
+          supplyAmount: amounts?.supply,
+          vatAmount: amounts?.vat,
+          taxTypeSnapshot: amounts?.taxTypeSnapshot,
         });
         orderIds.push(orderId);
       }

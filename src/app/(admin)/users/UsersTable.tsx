@@ -11,15 +11,25 @@ import {
   ShieldOff,
   Store,
   UserMinus,
+  RefreshCw,
 } from 'lucide-react';
 import {
   approveSellerIdentityAction,
   deleteUserAction,
+  refreshSellerTaxTypeAction,
   updateUserRoleAction,
 } from './actions';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { AlertDialog } from '@/components/ui/alert-dialog';
 import type { AdminUserListItem } from '@/libs/supabase/queries/users';
+
+const TAX_TYPE_LABEL: Record<string, string> = {
+  general: '일반과세(부가세 가산)',
+  simplified: '간이과세',
+  exempt: '면세',
+  other: '휴·폐업 등',
+  unknown: '과세유형 미확인',
+};
 
 function formatPhone(phone: string | null): string {
   if (!phone) return '-';
@@ -36,6 +46,7 @@ interface UserRowProps {
   onDeleteClick: () => void;
   onRoleChangeClick: (role: 'user' | 'admin' | 'seller') => void;
   onApproveIdentityClick: () => void;
+  onRefreshTaxTypeClick: () => void;
 }
 
 function UserRow({
@@ -48,6 +59,7 @@ function UserRow({
   onDeleteClick,
   onRoleChangeClick,
   onApproveIdentityClick,
+  onRefreshTaxTypeClick,
 }: UserRowProps) {
   return (
     <div
@@ -89,12 +101,8 @@ function UserRow({
                   user.seller_identity.businessVerified
                     ? ' (국세청 확인)'
                     : ' (국세청 미확인)'
-                }`
-              : '개인'}
-            {' · '}
-            휴대폰 {user.seller_identity.phoneVerified ? '인증' : '미인증'}
-            {' · '}
-            이메일 {user.seller_identity.emailVerified ? '인증' : '미인증'}
+                } · ${TAX_TYPE_LABEL[user.seller_identity.taxType ?? 'unknown']}`
+              : `개인 ${user.seller_identity.contactName ?? ''}`.trim()}
           </p>
         )}
       </div>
@@ -145,6 +153,15 @@ function UserRow({
                   >
                     <ShieldCheck size={14} />
                     신원정보 승인
+                  </button>
+                )}
+                {user.seller_identity?.sellerType === 'business' && (
+                  <button
+                    onClick={onRefreshTaxTypeClick}
+                    className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 w-full text-left"
+                  >
+                    <RefreshCw size={14} />
+                    과세유형 재조회
                   </button>
                 )}
                 <button
@@ -275,6 +292,23 @@ export default function UsersTable({
     }
   };
 
+  const handleRefreshTaxType = async (id: string) => {
+    setMenuOpenId(null);
+    setUpdatingRoleId(id);
+    try {
+      await refreshSellerTaxTypeAction(id);
+      router.refresh();
+    } catch (err) {
+      setAlertMessage(
+        err instanceof Error && err.message
+          ? err.message
+          : '과세유형 조회에 실패했습니다.',
+      );
+    } finally {
+      setUpdatingRoleId(null);
+    }
+  };
+
   const admins = items.filter((user) => user.role === 'admin');
   const sellers = items.filter((user) => user.role === 'seller');
   // 판매자 신청한 사람을 먼저 보여줘서 관리자가 처리할 대상을 바로 찾을 수 있게 한다
@@ -316,6 +350,7 @@ export default function UsersTable({
               onDeleteClick={() => handleDeleteClick(user.id)}
               onRoleChangeClick={(role) => handleRoleChangeClick(user.id, role)}
               onApproveIdentityClick={() => handleApproveIdentity(user.id)}
+              onRefreshTaxTypeClick={() => handleRefreshTaxType(user.id)}
             />
           ))}
         </div>

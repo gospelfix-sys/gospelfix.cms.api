@@ -120,6 +120,12 @@ export default function OrdersTable({
               </td>
               <td className="px-4 py-3 text-gray-600 dark:text-gray-300">
                 {formatPrice(order.amount)}
+                {order.vat_amount > 0 && (
+                  <span className="block text-xs text-gray-400 dark:text-gray-500">
+                    공급가 {formatPrice(order.supply_amount ?? order.amount - order.vat_amount)} + 부가세{' '}
+                    {formatPrice(order.vat_amount)}
+                  </span>
+                )}
               </td>
               <td className="px-4 py-3 whitespace-nowrap">
                 <div className="flex items-center gap-2">

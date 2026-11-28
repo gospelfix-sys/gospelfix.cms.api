@@ -1,4 +1,6 @@
 import { createAdminClient } from '@/libs/supabase/admin';
+import { isVatApplicable } from '@/libs/pricing/vat';
+import { getApprovedSellerTaxType } from '@/libs/supabase/queries/seller-identity';
 
 export interface CartItemInput {
   userId: string;
@@ -31,6 +33,8 @@ export interface CartItemWithProduct {
   optionId: string;
   optionLabel: string;
   price: number;
+  // 결제 시 이 항목에 부가세 10%가 가산되는지(price는 공급가 기준). 서버가 판매자 과세유형으로 판단한다
+  vatApplicable: boolean;
   createdAt: string;
   product: {
     id: string;
@@ -68,7 +72,7 @@ export async function getCartItems(
 
   const { data: products, error: productsError } = await supabase
     .from('moda_products')
-    .select('id, name, slug, thumbnail_url')
+    .select('id, name, slug, thumbnail_url, seller_id')
     .in('id', productIds);
 
   if (productsError)
@@ -81,8 +85,25 @@ export async function getCartItems(
         name: string;
         slug: string;
         thumbnail_url: string | null;
+        seller_id: string | null;
       }[]
     ).map((p) => [p.id, p]),
+  );
+
+  const sellerIds = [
+    ...new Set(
+      [...productMap.values()]
+        .map((p) => p.seller_id)
+        .filter((id): id is string => Boolean(id)),
+    ),
+  ];
+  const vatBySeller = new Map<string, boolean>(
+    await Promise.all(
+      sellerIds.map(
+        async (id) =>
+          [id, isVatApplicable(await getApprovedSellerTaxType(id))] as const,
+      ),
+    ),
   );
 
   return (
@@ -104,6 +125,10 @@ export async function getCartItems(
       optionId: item.option_id,
       optionLabel: item.option_label,
       price: item.price,
+      vatApplicable:
+        item.price > 0 && product?.seller_id
+          ? (vatBySeller.get(product.seller_id) ?? false)
+          : false,
       createdAt: item.created_at,
       product: product
         ? {

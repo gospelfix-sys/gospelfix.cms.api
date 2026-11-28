@@ -15,10 +15,12 @@ export interface AdminUserListItem {
   // 판매자 신원정보 제출 요약(없으면 null). 승인 전에 관리자가 확인하는 용도라 연락처 원문은 뺐다
   seller_identity: {
     sellerType: 'individual' | 'business';
+    contactName: string | null;
     status: 'pending' | 'approved' | 'rejected';
     businessName: string | null;
     businessNumber: string | null;
     businessVerified: boolean;
+    taxType: 'general' | 'simplified' | 'exempt' | 'other' | null;
     phoneVerified: boolean;
     emailVerified: boolean;
   } | null;
@@ -38,7 +40,7 @@ export async function getAllUsers(): Promise<AdminUserListItem[]> {
       supabase
         .from('moda_seller_identities')
         .select(
-          'user_id, seller_type, status, business_name, business_number, business_verified_at, phone_verified_at, email_verified_at',
+          'user_id, seller_type, contact_name, status, business_name, business_number, business_verified_at, tax_type, phone_verified_at, email_verified_at',
         ),
     ]);
 
@@ -55,10 +57,12 @@ export async function getAllUsers(): Promise<AdminUserListItem[]> {
       seller_identity: row
         ? {
             sellerType: row.seller_type,
+            contactName: row.contact_name,
             status: row.status,
             businessName: row.business_name,
             businessNumber: row.business_number,
             businessVerified: row.business_verified_at !== null,
+            taxType: row.tax_type,
             phoneVerified: row.phone_verified_at !== null,
             emailVerified: row.email_verified_at !== null,
           }

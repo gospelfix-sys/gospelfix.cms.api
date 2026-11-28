@@ -43,7 +43,7 @@ export async function getAllOrdersAdmin(
   let query = supabase
     .from('moda_orders')
     .select(
-      'id, order_id, amount, status, payment_key, paid_at, created_at, product_id, user_id',
+      'id, order_id, amount, supply_amount, vat_amount, status, payment_key, paid_at, created_at, product_id, user_id',
       { count: 'exact' },
     );
 
@@ -95,6 +95,8 @@ export async function getAllOrdersAdmin(
     id: string;
     order_id: string;
     amount: number;
+    supply_amount: number | null;
+    vat_amount: number;
     status: string;
     payment_key: string | null;
     paid_at: string | null;
@@ -136,6 +138,8 @@ export async function getAllOrdersAdmin(
       id: o.id,
       order_id: o.order_id,
       amount: o.amount,
+      supply_amount: o.supply_amount,
+      vat_amount: o.vat_amount,
       status: o.status as AdminOrderListItem['status'],
       payment_key: o.payment_key,
       paid_at: o.paid_at,

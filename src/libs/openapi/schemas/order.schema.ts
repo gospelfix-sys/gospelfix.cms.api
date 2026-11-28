@@ -73,7 +73,8 @@ export const CreateOrderRequestSchema = z
     couponCode: z.string().optional().openapi({
       example: 'GF-AB12-CD34',
       description:
-        '적용할 쿠폰 코드(선택). 유료 상품에만 적용 가능하며, 서버에서 할인율만큼 재계산한 금액이 amount와 일치해야 한다.',
+        '적용할 쿠폰 코드(선택). 유료 상품에만 적용 가능하며, 서버에서 할인율만큼 재계산한 금액이 amount와 일치해야 한다. ' +
+        'amount는 쿠폰 적용 후 공급가액에 (일반과세자 상품이면) 부가세 10%를 더한 총액이다.',
     }),
   })
   .openapi('CreateOrderRequest');
@@ -108,7 +109,12 @@ export const MyOrderSchema = z
       .datetime()
       .nullable()
       .openapi({ example: '2026-07-21T10:00:00.000Z' }),
-    amount: z.number().int().openapi({ example: 29000 }),
+    amount: z.number().int().openapi({
+      example: 31900,
+      description: '구매자가 입금하는 총액(부가세 포함)',
+    }),
+    supplyAmount: z.number().int().openapi({ example: 29000 }),
+    vatAmount: z.number().int().openapi({ example: 2900 }),
     product: z
       .object({
         id: z
@@ -139,7 +145,12 @@ export const MyPendingOrderSchema = z
     status: z
       .enum(['pending', 'pending_confirm'])
       .openapi({ example: 'pending' }),
-    amount: z.number().int().openapi({ example: 29000 }),
+    amount: z.number().int().openapi({
+      example: 31900,
+      description: '구매자가 입금하는 총액(부가세 포함)',
+    }),
+    supplyAmount: z.number().int().openapi({ example: 29000 }),
+    vatAmount: z.number().int().openapi({ example: 2900 }),
     createdAt: z
       .string()
       .datetime()

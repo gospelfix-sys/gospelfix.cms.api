@@ -26,6 +26,8 @@ export async function GET(request: NextRequest) {
       orderId: order.order_id,
       status: order.status,
       amount: order.amount,
+      supplyAmount: order.supply_amount ?? order.amount,
+      vatAmount: order.vat_amount ?? 0,
       createdAt: order.created_at,
       product: order.product
         ? {

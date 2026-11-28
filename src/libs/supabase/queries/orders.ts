@@ -43,6 +43,10 @@ export async function createPendingOrder(input: {
   agreedToWithdrawalNotice: boolean;
   couponId?: string | null;
   discountAmount?: number;
+  // 부가세 분리 저장. amount는 항상 supplyAmount + vatAmount(구매자 입금 총액)
+  supplyAmount?: number;
+  vatAmount?: number;
+  taxTypeSnapshot?: string | null;
 }): Promise<void> {
   const supabase = createAdminClient();
   const { error } = await supabase.from('moda_orders').insert({
@@ -54,6 +58,9 @@ export async function createPendingOrder(input: {
     withdrawal_notice_agreed: input.agreedToWithdrawalNotice,
     coupon_id: input.couponId ?? null,
     discount_amount: input.discountAmount ?? 0,
+    supply_amount: input.supplyAmount ?? input.amount,
+    vat_amount: input.vatAmount ?? 0,
+    tax_type_snapshot: input.taxTypeSnapshot ?? null,
   });
 
   if (error) {
@@ -234,6 +241,8 @@ export interface PendingOrder {
   order_id: string;
   status: 'pending' | 'pending_confirm';
   amount: number;
+  supply_amount: number | null;
+  vat_amount: number;
   created_at: string;
   product: {
     id: string;
@@ -255,7 +264,7 @@ export async function getPendingOrdersForUser(
 
   const { data: orders, error: ordersError } = await supabase
     .from('moda_orders')
-    .select('order_id, status, amount, created_at, product_id')
+    .select('order_id, status, amount, supply_amount, vat_amount, created_at, product_id')
     .eq('user_id', userId)
     .in('status', ['pending', 'pending_confirm'])
     .order('created_at', { ascending: false });
@@ -287,6 +296,8 @@ export async function getPendingOrdersForUser(
       order_id: string;
       status: 'pending' | 'pending_confirm';
       amount: number;
+      supply_amount: number | null;
+      vat_amount: number;
       created_at: string;
       product_id: string | null;
     }[]
@@ -294,6 +305,8 @@ export async function getPendingOrdersForUser(
     order_id: order.order_id,
     status: order.status,
     amount: order.amount,
+    supply_amount: order.supply_amount,
+    vat_amount: order.vat_amount,
     created_at: order.created_at,
     product: order.product_id
       ? (productMap.get(order.product_id) ?? null)
@@ -305,6 +318,8 @@ export interface PurchasedOrder {
   order_id: string;
   paid_at: string | null;
   amount: number;
+  supply_amount: number | null;
+  vat_amount: number;
   product: {
     id: string;
     name: string;
@@ -325,7 +340,7 @@ export async function getPurchasedOrders(
   // 1단계: 주문 목록 조회
   const { data: orders, error: ordersError } = await supabase
     .from('moda_orders')
-    .select('order_id, paid_at, amount, product_id')
+    .select('order_id, paid_at, amount, supply_amount, vat_amount, product_id')
     .eq('user_id', userId)
     .eq('status', 'paid')
     .order('created_at', { ascending: false });
@@ -358,12 +373,16 @@ export async function getPurchasedOrders(
       order_id: string;
       paid_at: string | null;
       amount: number;
+      supply_amount: number | null;
+      vat_amount: number;
       product_id: string | null;
     }[]
   ).map((order) => ({
     order_id: order.order_id,
     paid_at: order.paid_at,
     amount: order.amount,
+    supply_amount: order.supply_amount,
+    vat_amount: order.vat_amount,
     product: order.product_id
       ? (productMap.get(order.product_id) ?? null)
       : null,

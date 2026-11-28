@@ -7,7 +7,10 @@ export const CartItemSchema = z
     id: z.string().uuid().openapi({ example: '550e8400-e29b-41d4-a716-446655440000' }),
     optionId: z.string().openapi({ example: 'simple' }),
     optionLabel: z.string().openapi({ example: '단순복사' }),
-    price: z.number().int().openapi({ example: 29000 }),
+    price: z.number().int().openapi({ example: 29000, description: '공급가 기준 가격(부가세 제외)' }),
+    vatApplicable: z.boolean().openapi({
+      description: '결제 시 부가세 10%가 가산되는 항목인지(일반과세자 상품). 총액 = price + floor(price × 0.1)',
+    }),
     createdAt: z.string().datetime().openapi({ example: '2026-08-03T00:00:00.000Z' }),
     product: z
       .object({

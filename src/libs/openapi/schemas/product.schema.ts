@@ -108,6 +108,11 @@ export const ProductSchema = z
       description:
         '화면 표시용 가격 문자열. 무료 상품(price === 0)은 "FREE", price가 없으면 null, 그 외에는 "19,000원" 형식',
     }),
+    vat_applicable: z.boolean().openapi({
+      example: false,
+      description:
+        '판매가에 부가세(10%)가 가산되는 상품 여부. 일반과세자 판매자의 유료 상품일 때만 true이며, 이 경우 결제 총액은 price + floor(price × 0.1)',
+    }),
     supply_price: z
       .number()
       .nullable()
@@ -283,15 +288,18 @@ export const ProductSellerResponseSchema = z
       identity: z
         .object({
           sellerType: z.enum(['individual', 'business']),
-          verified: z.boolean().openapi({ description: '휴대폰·이메일 인증 완료 여부' }),
+          verified: z.boolean().openapi({
+            description: '사업자는 국세청 진위확인 완료 여부, 개인은 관리자 승인 후 노출되므로 true',
+          }),
           business: z
             .object({
               name: z.string(),
               representativeName: z.string(),
               address: z.string(),
-              phone: z.string(),
               businessNumber: z.string(),
-              mailOrderReportNumber: z.string(),
+              mailOrderReportNumber: z.string().nullable().openapi({
+                description: '신고 면제 등으로 입력하지 않았으면 null',
+              }),
             })
             .nullable()
             .openapi({ description: '개인 판매자는 null(연락처 원문은 공개하지 않음)' }),
@@ -302,6 +310,11 @@ export const ProductSellerResponseSchema = z
             '관리자가 승인한 판매자 신원정보만 공개한다. 승인 전이거나 제출 이력이 없거나 ' +
             '플랫폼 직접 등록 상품이면 null',
         }),
+      vatApplicable: z.boolean().openapi({
+        description:
+          '결제 금액에 부가세 10%가 가산되는 상품이면 true(일반과세자로 확인된 승인 판매자). ' +
+          '이때 주문 amount는 공급가액 + 부가세(VAT 포함 총액)여야 한다.',
+      }),
     }),
   })
   .openapi('ProductSellerResponse');

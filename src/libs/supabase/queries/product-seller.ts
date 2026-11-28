@@ -1,8 +1,10 @@
 import { createAdminClient } from '@/libs/supabase/admin';
 import {
+  getApprovedSellerTaxType,
   getPublicSellerIdentity,
   type PublicSellerIdentity,
 } from '@/libs/supabase/queries/seller-identity';
+import { isVatApplicable } from '@/libs/pricing/vat';
 
 export interface ProductSellerInfo {
   registered_at: string;
@@ -14,6 +16,8 @@ export interface ProductSellerInfo {
   } | null;
   // 전자상거래법 제20조② 주문 전 신원정보. 승인 전·미제출(기존 판매자 유예 포함)이면 null
   identity: PublicSellerIdentity | null;
+  // 결제 금액에 부가세(10%)가 가산되는 상품인지. 서버가 판단하고 앱은 이 값으로 표시만 한다
+  vatApplicable: boolean;
 }
 
 /**
@@ -49,7 +53,7 @@ export async function getProductSellerInfo(
   if (error || !product) return null;
 
   if (!product.seller_id) {
-    return { registered_at: product.created_at, seller: null, identity: null };
+    return { registered_at: product.created_at, seller: null, identity: null, vatApplicable: false };
   }
 
   const { data: profile } = await supabase
@@ -59,7 +63,7 @@ export async function getProductSellerInfo(
     .maybeSingle();
 
   if (!profile) {
-    return { registered_at: product.created_at, seller: null, identity: null };
+    return { registered_at: product.created_at, seller: null, identity: null, vatApplicable: false };
   }
 
   const handle = maskEmailHandle(profile.email);
@@ -71,5 +75,8 @@ export async function getProductSellerInfo(
       handle,
     },
     identity: await getPublicSellerIdentity(product.seller_id),
+    vatApplicable: isVatApplicable(
+      await getApprovedSellerTaxType(product.seller_id),
+    ),
   };
 }

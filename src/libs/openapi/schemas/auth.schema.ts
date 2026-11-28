@@ -22,20 +22,17 @@ export const SignupRequestSchema = z
 export const SellerRequestRequestSchema = z
   .object({
     sellerType: z.enum(['individual', 'business']).openapi({ example: 'business' }),
+    contactName: z.string().optional().openapi({
+      example: '홍길동',
+      description: 'individual일 때 필수(최대 50자). business는 대표자명을 쓰므로 보내지 않는다',
+    }),
     contactPhone: z.string().openapi({ example: '01012345678', description: '휴대폰(숫자만)' }),
-    phoneVerificationToken: z.string().openapi({
-      description: '/api/v1/auth/phone/verify-code로 발급받은 1회용 토큰. 신청 시 소비된다.',
-    }),
     contactEmail: z.string().email().openapi({ example: 'seller@example.com' }),
-    emailVerificationToken: z.string().openapi({
-      description: '/api/v1/auth/email/verify-code로 발급받은 1회용 토큰. 신청 시 소비된다.',
-    }),
     businessName: z.string().optional().openapi({ description: 'business일 때 필수' }),
     representativeName: z.string().optional().openapi({ description: 'business일 때 필수' }),
-    businessAddress: z.string().optional().openapi({ description: 'business일 때 필수' }),
-    businessPhone: z.string().optional().openapi({
-      example: '0212345678',
-      description: 'business일 때 필수. 지역번호·대표번호(15xx) 허용, 숫자만',
+    businessAddress: z.string().optional().openapi({
+      description:
+        'business일 때 필수. 8자 이상이며 한글·숫자·행정구역(시/구/동/로/길 등)을 포함해야 한다(실재 여부는 확인하지 않음)',
     }),
     businessNumber: z.string().optional().openapi({
       example: '1234567891',
@@ -46,7 +43,7 @@ export const SellerRequestRequestSchema = z
       description: 'business일 때 필수. YYYYMMDD. 국세청 진위확인에만 쓰고 저장하지 않는다.',
     }),
     mailOrderReportNumber: z.string().optional().openapi({
-      description: 'business일 때 필수. 통신판매업 신고번호',
+      description: 'business일 때 선택. 신고 면제 대상은 비워둘 수 있다',
     }),
   })
   .openapi('SellerRequestRequest');
@@ -54,6 +51,7 @@ export const SellerRequestRequestSchema = z
 export const SellerIdentitySchema = z
   .object({
     sellerType: z.enum(['individual', 'business']),
+    contactName: z.string().nullable().openapi({ description: '개인 판매자 이름(사업자는 null)' }),
     contactPhone: z.string(),
     phoneVerified: z.boolean(),
     contactEmail: z.string(),
@@ -61,7 +59,6 @@ export const SellerIdentitySchema = z
     businessName: z.string().nullable(),
     representativeName: z.string().nullable(),
     businessAddress: z.string().nullable(),
-    businessPhone: z.string().nullable(),
     businessNumber: z.string().nullable(),
     mailOrderReportNumber: z.string().nullable(),
     businessVerified: z.boolean().openapi({ description: '국세청 진위확인 통과 여부' }),
@@ -826,9 +823,9 @@ export function registerAuthPaths(reg: OpenAPIRegistry) {
     path: '/api/v1/auth/seller-request',
     summary: '판매자 신청 (신원정보 제출)',
     description:
-      '판매자 신원정보(휴대폰·이메일 인증 토큰, 사업자는 사업자 정보)를 제출합니다. ' +
-      'business는 국세청 진위확인(사업자번호·개업일자·대표자명 일치)을 통과해야 하며, 이 확인은 ' +
-      '인증 토큰을 소비하기 전에 수행됩니다. 신원정보는 pending으로 저장되고, 관리자가 /users에서 ' +
+      '판매자 신원정보를 제출합니다. 휴대폰·이메일은 인증 없이 입력만 받습니다. ' +
+      'business는 국세청 진위확인(사업자번호·개업일자·대표자명·상호 일치)을 통과해야 하고, ' +
+      'individual은 관리자 확인으로 신원을 갈음합니다. 신원정보는 pending으로 저장되고, 관리자가 /users에서 ' +
       '승인해야 구매자에게 공개됩니다. role이 user면 seller_requested_at도 기록하며 role은 자동으로 ' +
       '바꾸지 않습니다. 이미 seller인 계정은 신원정보만 제출/갱신합니다. admin 등 그 외 role은 400. ' +
       '/settings에서 끌 수 있습니다.',
@@ -846,7 +843,7 @@ export function registerAuthPaths(reg: OpenAPIRegistry) {
       },
       400: {
         description:
-          '필수 항목 누락·형식 오류, 사업자번호 불일치(국세청), 만료/사용된 인증 토큰, 신청할 수 없는 role',
+          '필수 항목 누락·형식 오류, 사업자번호 불일치(국세청), 신청할 수 없는 role',
         content: { 'application/json': { schema: ErrorResponseSchema } },
       },
       401: {
@@ -858,7 +855,7 @@ export function registerAuthPaths(reg: OpenAPIRegistry) {
         content: { 'application/json': { schema: ErrorResponseSchema } },
       },
       503: {
-        description: '국세청 진위확인 서비스 일시 장애(토큰은 소비되지 않음)',
+        description: '국세청 진위확인 서비스 일시 장애',
         content: { 'application/json': { schema: ErrorResponseSchema } },
       },
     },

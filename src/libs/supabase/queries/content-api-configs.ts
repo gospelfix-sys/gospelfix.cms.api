@@ -1,4 +1,6 @@
 import { createAdminClient } from '@/libs/supabase/admin';
+import { isVatApplicable } from '@/libs/pricing/vat';
+import { getApprovedSellerTaxTypes } from '@/libs/supabase/queries/seller-identity';
 
 export interface ContentApiConfig {
   id: string;
@@ -51,6 +53,49 @@ function enrichProductFields(
     };
   }
   return item;
+}
+
+// products 목록 카드가 상세 페이지와 같은 가격(부가세 포함 여부)을 보여주도록 vat_applicable을 붙인다.
+// select_columns 화이트리스트에 seller_id를 노출하지 않으려고 id로 판매자를 따로 조회한다.
+async function attachVatApplicable(
+  config: ContentApiConfig,
+  rows: Record<string, unknown>[],
+): Promise<Record<string, unknown>[]> {
+  if (config.resource_slug !== 'products') return rows;
+  const ids = rows
+    .map((row) => row.id)
+    .filter((id): id is string => typeof id === 'string');
+  if (ids.length === 0) return rows;
+
+  const supabase = createAdminClient();
+  const { data, error } = await supabase
+    .from('moda_products')
+    .select('id, seller_id')
+    .in('id', ids);
+  if (error) throw new Error(error.message);
+
+  const sellerByProduct = new Map<string, string | null>(
+    (data ?? []).map((p) => [
+      p.id as string,
+      (p.seller_id as string | null) ?? null,
+    ]),
+  );
+  const sellerIds = [
+    ...new Set([...sellerByProduct.values()].filter((v): v is string => !!v)),
+  ];
+  const taxTypes = await getApprovedSellerTaxTypes(sellerIds);
+
+  return rows.map((row) => {
+    const sellerId = sellerByProduct.get(row.id as string);
+    const price = typeof row.price === 'number' ? row.price : 0;
+    return {
+      ...row,
+      vat_applicable:
+        price > 0 &&
+        !!sellerId &&
+        isVatApplicable(taxTypes.get(sellerId) ?? null),
+    };
+  });
 }
 
 export class InvalidIdentifierError extends Error {
@@ -119,7 +164,9 @@ export async function queryConfigList(
   // 시점에 동적으로 켜고 끄는 값이라 config가 아니라 매 요청의 쿼리 파라미터로 받는다.
   if (config.resource_slug === 'products' && options?.priceType) {
     query =
-      options.priceType === 'free' ? query.eq('price', 0) : query.gt('price', 0);
+      options.priceType === 'free'
+        ? query.eq('price', 0)
+        : query.gt('price', 0);
   }
 
   const from = (page - 1) * limit;
@@ -131,7 +178,9 @@ export async function queryConfigList(
   // 존재해서, 게이팅 없이 news/portfolios에 sort_by=like_count가 오면 존재하지 않는 컬럼
   // 기준 정렬로 Supabase 쿼리 에러(500)가 난다.
   const sortOverride =
-    config.resource_slug === 'products' && options?.sortBy && SORTABLE_COLUMNS.includes(options.sortBy)
+    config.resource_slug === 'products' &&
+    options?.sortBy &&
+    SORTABLE_COLUMNS.includes(options.sortBy)
       ? options.sortBy
       : null;
   const orderColumn = sortOverride ?? config.order_column;
@@ -157,7 +206,9 @@ export async function queryConfigList(
 
   const rows = (data ?? []) as unknown as Record<string, unknown>[];
   return {
-    data: rows.map((row) => enrichProductFields(config, row)),
+    data: (await attachVatApplicable(config, rows)).map((row) =>
+      enrichProductFields(config, row),
+    ),
     total: count ?? 0,
   };
 }
@@ -180,8 +231,8 @@ export async function queryConfigDetail(
     .single();
 
   if (error || !data) return null;
-  return enrichProductFields(
-    config,
+  const [row] = await attachVatApplicable(config, [
     data as unknown as Record<string, unknown>,
-  );
+  ]);
+  return enrichProductFields(config, row);
 }

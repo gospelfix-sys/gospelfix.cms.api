@@ -10,6 +10,8 @@ import {
 } from '@/libs/supabase/queries/orders';
 import { validateCouponForOrder } from '@/libs/supabase/queries/coupons';
 import { getEffectivePrice } from '@/libs/pricing/productPriceState';
+import { buildOrderAmounts } from '@/libs/pricing/vat';
+import { getApprovedSellerTaxType } from '@/libs/supabase/queries/seller-identity';
 import { hasBuyerVisiblePayoutAccount } from '@/libs/supabase/queries/payout-accounts';
 import {
   isSellerDirectTransferEnabled,
@@ -99,7 +101,12 @@ export async function POST(request: NextRequest) {
       discountAmount = Math.floor((basePrice * coupon.discount_rate) / 100);
     }
 
-    if (basePrice - discountAmount !== amount) {
+    // 쿠폰은 공급가액에 적용하고, 일반과세자 상품이면 그 뒤에 부가세를 얹은 총액이 결제 금액이다
+    const taxType = product.seller_id
+      ? await getApprovedSellerTaxType(product.seller_id)
+      : null;
+    const amounts = buildOrderAmounts(basePrice - discountAmount, taxType);
+    if (amounts.total !== amount) {
       return NextResponse.json({ error: '결제 금액이 올바르지 않습니다.' }, { status: 400 });
     }
 
@@ -131,6 +138,9 @@ export async function POST(request: NextRequest) {
         agreedToWithdrawalNotice,
         couponId,
         discountAmount,
+        supplyAmount: amounts.supply,
+        vatAmount: amounts.vat,
+        taxTypeSnapshot: amounts.taxTypeSnapshot,
       });
     } catch (insertError) {
       if (insertError instanceof CouponConflictError) {
