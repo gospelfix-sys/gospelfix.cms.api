@@ -73,7 +73,7 @@ export async function getBearerUser(
   return data.user;
 }
 
-async function getAdminProfileRole(userId: string): Promise<string | null> {
+export async function getAdminProfileRole(userId: string): Promise<string | null> {
   const adminSupabase = createAdminClient();
   const { data } = await adminSupabase
     .from('profiles')

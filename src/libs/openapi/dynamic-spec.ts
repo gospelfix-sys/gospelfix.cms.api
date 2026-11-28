@@ -43,6 +43,7 @@ const TAG_RULES: { prefix: string; tag: string }[] = [
   { prefix: '/api/v1/auth/password', tag: '내 계정' },
   { prefix: '/api/v1/auth/avatar', tag: '내 계정' },
   { prefix: '/api/v1/auth/seller-request', tag: '내 계정' },
+  { prefix: '/api/v1/my-seller-identity', tag: '내 계정' },
   { prefix: '/api/v1/auth', tag: '인증 - 가입/로그인' },
   { prefix: '/api/v1/my-products', tag: '내 상품 (판매자)' },
   { prefix: '/api/v1/product-categories', tag: '상품 카테고리' },

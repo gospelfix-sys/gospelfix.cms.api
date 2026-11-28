@@ -1,4 +1,8 @@
 import { createAdminClient } from '@/libs/supabase/admin';
+import {
+  getPublicSellerIdentity,
+  type PublicSellerIdentity,
+} from '@/libs/supabase/queries/seller-identity';
 
 export interface ProductSellerInfo {
   registered_at: string;
@@ -8,6 +12,8 @@ export interface ProductSellerInfo {
     avatar_url: string | null;
     handle: string;
   } | null;
+  // 전자상거래법 제20조② 주문 전 신원정보. 승인 전·미제출(기존 판매자 유예 포함)이면 null
+  identity: PublicSellerIdentity | null;
 }
 
 /**
@@ -43,7 +49,7 @@ export async function getProductSellerInfo(
   if (error || !product) return null;
 
   if (!product.seller_id) {
-    return { registered_at: product.created_at, seller: null };
+    return { registered_at: product.created_at, seller: null, identity: null };
   }
 
   const { data: profile } = await supabase
@@ -53,7 +59,7 @@ export async function getProductSellerInfo(
     .maybeSingle();
 
   if (!profile) {
-    return { registered_at: product.created_at, seller: null };
+    return { registered_at: product.created_at, seller: null, identity: null };
   }
 
   const handle = maskEmailHandle(profile.email);
@@ -64,5 +70,6 @@ export async function getProductSellerInfo(
       avatar_url: profile.avatar_url,
       handle,
     },
+    identity: await getPublicSellerIdentity(product.seller_id),
   };
 }

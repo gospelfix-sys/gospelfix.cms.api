@@ -19,6 +19,57 @@ export const SignupRequestSchema = z
   })
   .openapi('SignupRequest');
 
+export const SellerRequestRequestSchema = z
+  .object({
+    sellerType: z.enum(['individual', 'business']).openapi({ example: 'business' }),
+    contactPhone: z.string().openapi({ example: '01012345678', description: '휴대폰(숫자만)' }),
+    phoneVerificationToken: z.string().openapi({
+      description: '/api/v1/auth/phone/verify-code로 발급받은 1회용 토큰. 신청 시 소비된다.',
+    }),
+    contactEmail: z.string().email().openapi({ example: 'seller@example.com' }),
+    emailVerificationToken: z.string().openapi({
+      description: '/api/v1/auth/email/verify-code로 발급받은 1회용 토큰. 신청 시 소비된다.',
+    }),
+    businessName: z.string().optional().openapi({ description: 'business일 때 필수' }),
+    representativeName: z.string().optional().openapi({ description: 'business일 때 필수' }),
+    businessAddress: z.string().optional().openapi({ description: 'business일 때 필수' }),
+    businessPhone: z.string().optional().openapi({
+      example: '0212345678',
+      description: 'business일 때 필수. 지역번호·대표번호(15xx) 허용, 숫자만',
+    }),
+    businessNumber: z.string().optional().openapi({
+      example: '1234567891',
+      description: 'business일 때 필수. 10자리(체크섬 검증 후 국세청 진위확인)',
+    }),
+    businessOpenedAt: z.string().optional().openapi({
+      example: '20240131',
+      description: 'business일 때 필수. YYYYMMDD. 국세청 진위확인에만 쓰고 저장하지 않는다.',
+    }),
+    mailOrderReportNumber: z.string().optional().openapi({
+      description: 'business일 때 필수. 통신판매업 신고번호',
+    }),
+  })
+  .openapi('SellerRequestRequest');
+
+export const SellerIdentitySchema = z
+  .object({
+    sellerType: z.enum(['individual', 'business']),
+    contactPhone: z.string(),
+    phoneVerified: z.boolean(),
+    contactEmail: z.string(),
+    emailVerified: z.boolean(),
+    businessName: z.string().nullable(),
+    representativeName: z.string().nullable(),
+    businessAddress: z.string().nullable(),
+    businessPhone: z.string().nullable(),
+    businessNumber: z.string().nullable(),
+    mailOrderReportNumber: z.string().nullable(),
+    businessVerified: z.boolean().openapi({ description: '국세청 진위확인 통과 여부' }),
+    status: z.enum(['pending', 'approved', 'rejected']),
+    submittedAt: z.string(),
+  })
+  .openapi('SellerIdentity');
+
 export const SendPhoneCodeRequestSchema = z
   .object({
     phone: z.string().openapi({ example: '01012345678' }),
@@ -773,19 +824,29 @@ export function registerAuthPaths(reg: OpenAPIRegistry) {
   reg.registerPath({
     method: 'post',
     path: '/api/v1/auth/seller-request',
-    summary: '판매자 전환 신청',
+    summary: '판매자 신청 (신원정보 제출)',
     description:
-      '일반 회원이 판매자로 전환하고 싶다는 의사만 표시합니다(profiles.seller_requested_at 기록). ' +
-      '자동으로 role을 바꾸지 않으며, 관리자가 /users 페이지에서 이 신호를 보고 수동으로 seller로 ' +
-      '전환해야 합니다. 이미 seller/admin인 계정은 400을 반환합니다. /settings에서 끌 수 있습니다.',
+      '판매자 신원정보(휴대폰·이메일 인증 토큰, 사업자는 사업자 정보)를 제출합니다. ' +
+      'business는 국세청 진위확인(사업자번호·개업일자·대표자명 일치)을 통과해야 하며, 이 확인은 ' +
+      '인증 토큰을 소비하기 전에 수행됩니다. 신원정보는 pending으로 저장되고, 관리자가 /users에서 ' +
+      '승인해야 구매자에게 공개됩니다. role이 user면 seller_requested_at도 기록하며 role은 자동으로 ' +
+      '바꾸지 않습니다. 이미 seller인 계정은 신원정보만 제출/갱신합니다. admin 등 그 외 role은 400. ' +
+      '/settings에서 끌 수 있습니다.',
     security: [{ BearerAuth: [] }],
+    request: {
+      body: {
+        required: true,
+        content: { 'application/json': { schema: SellerRequestRequestSchema } },
+      },
+    },
     responses: {
       200: {
         description: '신청 성공',
         content: { 'application/json': { schema: SuccessResponseSchema } },
       },
       400: {
-        description: '이미 판매자이거나 신청할 수 없는 상태',
+        description:
+          '필수 항목 누락·형식 오류, 사업자번호 불일치(국세청), 만료/사용된 인증 토큰, 신청할 수 없는 role',
         content: { 'application/json': { schema: ErrorResponseSchema } },
       },
       401: {
@@ -794,6 +855,34 @@ export function registerAuthPaths(reg: OpenAPIRegistry) {
       },
       403: {
         description: '관리자가 /settings에서 이 API를 비활성화함',
+        content: { 'application/json': { schema: ErrorResponseSchema } },
+      },
+      503: {
+        description: '국세청 진위확인 서비스 일시 장애(토큰은 소비되지 않음)',
+        content: { 'application/json': { schema: ErrorResponseSchema } },
+      },
+    },
+  });
+
+  reg.registerPath({
+    method: 'get',
+    path: '/api/v1/my-seller-identity',
+    summary: '내 판매자 신원정보 조회',
+    description:
+      '본인이 제출한 신원정보와 승인 상태를 반환합니다. 연락처 원문이 포함되므로 본인만 조회할 수 ' +
+      '있고 응답은 캐시되지 않습니다(no-store). 제출 이력이 없으면 data가 null입니다.',
+    security: [{ BearerAuth: [] }],
+    responses: {
+      200: {
+        description: '조회 성공',
+        content: {
+          'application/json': {
+            schema: z.object({ data: SellerIdentitySchema.nullable() }),
+          },
+        },
+      },
+      401: {
+        description: '인증 실패',
         content: { 'application/json': { schema: ErrorResponseSchema } },
       },
     },

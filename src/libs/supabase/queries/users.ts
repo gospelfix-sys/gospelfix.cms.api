@@ -12,20 +12,59 @@ export interface AdminUserListItem {
   // 가입 경로. handle_new_user() 트리거가 raw_user_meta_data->>'provider'로 채운다
   // (이메일 가입은 이 키를 안 넘겨 기본값 'email', 카카오 로그인은 'kakao'를 명시)
   signup_provider: string;
+  // 판매자 신원정보 제출 요약(없으면 null). 승인 전에 관리자가 확인하는 용도라 연락처 원문은 뺐다
+  seller_identity: {
+    sellerType: 'individual' | 'business';
+    status: 'pending' | 'approved' | 'rejected';
+    businessName: string | null;
+    businessNumber: string | null;
+    businessVerified: boolean;
+    phoneVerified: boolean;
+    emailVerified: boolean;
+  } | null;
 }
 
 /** 관리자 유저 관리 페이지용 전체 유저 목록을 최근 가입순으로 조회한다. */
 export async function getAllUsers(): Promise<AdminUserListItem[]> {
   const supabase = createAdminClient();
-  const { data, error } = await supabase
-    .from('profiles')
-    .select(
-      'id, email, phone, role, created_at, seller_requested_at, signup_provider',
-    )
-    .order('created_at', { ascending: false });
+  const [{ data, error }, { data: identities, error: identityError }] =
+    await Promise.all([
+      supabase
+        .from('profiles')
+        .select(
+          'id, email, phone, role, created_at, seller_requested_at, signup_provider',
+        )
+        .order('created_at', { ascending: false }),
+      supabase
+        .from('moda_seller_identities')
+        .select(
+          'user_id, seller_type, status, business_name, business_number, business_verified_at, phone_verified_at, email_verified_at',
+        ),
+    ]);
 
   if (error) throw new Error(error.message);
-  return (data ?? []) as AdminUserListItem[];
+  if (identityError) throw new Error(identityError.message);
+
+  const identityByUser = new Map(
+    (identities ?? []).map((row) => [row.user_id as string, row]),
+  );
+  return (data ?? []).map((profile) => {
+    const row = identityByUser.get(profile.id);
+    return {
+      ...profile,
+      seller_identity: row
+        ? {
+            sellerType: row.seller_type,
+            status: row.status,
+            businessName: row.business_name,
+            businessNumber: row.business_number,
+            businessVerified: row.business_verified_at !== null,
+            phoneVerified: row.phone_verified_at !== null,
+            emailVerified: row.email_verified_at !== null,
+          }
+        : null,
+    };
+  }) as AdminUserListItem[];
 }
 
 /**

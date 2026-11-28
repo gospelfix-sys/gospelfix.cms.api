@@ -12,7 +12,11 @@ import {
   Store,
   UserMinus,
 } from 'lucide-react';
-import { deleteUserAction, updateUserRoleAction } from './actions';
+import {
+  approveSellerIdentityAction,
+  deleteUserAction,
+  updateUserRoleAction,
+} from './actions';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { AlertDialog } from '@/components/ui/alert-dialog';
 import type { AdminUserListItem } from '@/libs/supabase/queries/users';
@@ -31,6 +35,7 @@ interface UserRowProps {
   onCloseMenu: () => void;
   onDeleteClick: () => void;
   onRoleChangeClick: (role: 'user' | 'admin' | 'seller') => void;
+  onApproveIdentityClick: () => void;
 }
 
 function UserRow({
@@ -42,6 +47,7 @@ function UserRow({
   onCloseMenu,
   onDeleteClick,
   onRoleChangeClick,
+  onApproveIdentityClick,
 }: UserRowProps) {
   return (
     <div
@@ -76,6 +82,21 @@ function UserRow({
             </>
           )}
         </p>
+        {user.seller_identity && (
+          <p className="text-xs text-gray-500 dark:text-gray-400 truncate mt-0.5">
+            {user.seller_identity.sellerType === 'business'
+              ? `사업자 ${user.seller_identity.businessName ?? ''} ${user.seller_identity.businessNumber ?? ''}${
+                  user.seller_identity.businessVerified
+                    ? ' (국세청 확인)'
+                    : ' (국세청 미확인)'
+                }`
+              : '개인'}
+            {' · '}
+            휴대폰 {user.seller_identity.phoneVerified ? '인증' : '미인증'}
+            {' · '}
+            이메일 {user.seller_identity.emailVerified ? '인증' : '미인증'}
+          </p>
+        )}
       </div>
 
       <PopoverPrimitive.Root
@@ -116,13 +137,24 @@ function UserRow({
                 관리자 해제
               </button>
             ) : user.role === 'seller' ? (
-              <button
-                onClick={() => onRoleChangeClick('user')}
-                className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 w-full text-left"
-              >
-                <UserMinus size={14} />
-                판매자 해제
-              </button>
+              <>
+                {user.seller_identity?.status === 'pending' && (
+                  <button
+                    onClick={onApproveIdentityClick}
+                    className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 w-full text-left"
+                  >
+                    <ShieldCheck size={14} />
+                    신원정보 승인
+                  </button>
+                )}
+                <button
+                  onClick={() => onRoleChangeClick('user')}
+                  className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 w-full text-left"
+                >
+                  <UserMinus size={14} />
+                  판매자 해제
+                </button>
+              </>
             ) : (
               <>
                 <button
@@ -226,6 +258,23 @@ export default function UsersTable({
     }
   };
 
+  const handleApproveIdentity = async (id: string) => {
+    setMenuOpenId(null);
+    setUpdatingRoleId(id);
+    try {
+      await approveSellerIdentityAction(id);
+      router.refresh();
+    } catch (err) {
+      setAlertMessage(
+        err instanceof Error && err.message
+          ? err.message
+          : '신원정보 승인에 실패했습니다.',
+      );
+    } finally {
+      setUpdatingRoleId(null);
+    }
+  };
+
   const admins = items.filter((user) => user.role === 'admin');
   const sellers = items.filter((user) => user.role === 'seller');
   // 판매자 신청한 사람을 먼저 보여줘서 관리자가 처리할 대상을 바로 찾을 수 있게 한다
@@ -266,6 +315,7 @@ export default function UsersTable({
               onCloseMenu={closeMenu}
               onDeleteClick={() => handleDeleteClick(user.id)}
               onRoleChangeClick={(role) => handleRoleChangeClick(user.id, role)}
+              onApproveIdentityClick={() => handleApproveIdentity(user.id)}
             />
           ))}
         </div>

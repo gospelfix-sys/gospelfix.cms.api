@@ -280,6 +280,28 @@ export const ProductSellerResponseSchema = z
         })
         .nullable()
         .openapi({ description: '플랫폼 직접 등록 상품은 개인 판매자가 없어 null' }),
+      identity: z
+        .object({
+          sellerType: z.enum(['individual', 'business']),
+          verified: z.boolean().openapi({ description: '휴대폰·이메일 인증 완료 여부' }),
+          business: z
+            .object({
+              name: z.string(),
+              representativeName: z.string(),
+              address: z.string(),
+              phone: z.string(),
+              businessNumber: z.string(),
+              mailOrderReportNumber: z.string(),
+            })
+            .nullable()
+            .openapi({ description: '개인 판매자는 null(연락처 원문은 공개하지 않음)' }),
+        })
+        .nullable()
+        .openapi({
+          description:
+            '관리자가 승인한 판매자 신원정보만 공개한다. 승인 전이거나 제출 이력이 없거나 ' +
+            '플랫폼 직접 등록 상품이면 null',
+        }),
     }),
   })
   .openapi('ProductSellerResponse');
