@@ -4,7 +4,8 @@ import {
   decryptAccountNumber,
 } from '@/libs/crypto/payoutAccount';
 
-// 판매자 정산 계좌. 번호 평문은 응답·로그 어디에도 내보내지 않고, 화면용으로는 끝 4자리만 준다.
+// 판매자 정산 계좌. 번호 평문은 로그에 남기지 않고, 응답은 구매자 입금 안내와 판매자 본인 송금 QR
+// 조회 두 경로에서만 내보낸다. 그 외 화면용 조회는 끝 4자리만 준다.
 
 export interface PayoutAccountSummary {
   bankName: string;
@@ -123,6 +124,34 @@ export async function getBuyerVisiblePayoutAccount(
   if (error) {
     console.error('[getBuyerVisiblePayoutAccount]', error.message);
     throw new Error('판매자 계좌 조회에 실패했습니다.');
+  }
+  if (!data) return null;
+  return {
+    bankName: data.bank_name as string,
+    accountHolder: data.account_holder as string,
+    accountNumber: decryptAccountNumber(
+      data.account_number_encrypted as string,
+    ),
+  };
+}
+
+/**
+ * 판매자 본인이 자기 계좌의 송금 QR을 만들 수 있게 번호 평문을 돌려준다. 구매자용과 달리 동의 여부와
+ * 무관하다(본인 계좌이고 구매자에게는 노출되지 않는다). 호출부에서 판매자 본인 인증을 먼저 검증해야 하며,
+ * 결과를 로그에 남기지 않는다.
+ */
+export async function getOwnPayoutAccountForTransfer(
+  userId: string,
+): Promise<BuyerVisiblePayoutAccount | null> {
+  const supabase = createAdminClient();
+  const { data, error } = await supabase
+    .from('moda_seller_payout_accounts')
+    .select('bank_name, account_holder, account_number_encrypted')
+    .eq('user_id', userId)
+    .maybeSingle();
+  if (error) {
+    console.error('[getOwnPayoutAccountForTransfer]', error.message);
+    throw new Error('정산 계좌 조회에 실패했습니다.');
   }
   if (!data) return null;
   return {
